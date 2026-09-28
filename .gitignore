@@ -1,0 +1,15 @@
+# Build outputs
+app/build/
+app/.cache/
+.hvigor/
+
+# Logs
+*.log
+
+# Node
+node_modules/
+
+# Editor / OS
+.DS_Store
+*.swp
+*.swo
