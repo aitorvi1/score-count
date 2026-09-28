@@ -1,0 +1,12 @@
+<div class="container">
+  <div class="score-row">
+    <div class="team team-left" onclick="addPointA" onlongpress="subtractPointA">
+      <text class="score">{{scoreA}}</text>
+    </div>
+    <div class="team team-right" onclick="addPointB" onlongpress="subtractPointB">
+      <text class="score">{{scoreB}}</text>
+    </div>
+  </div>
+
+  <text class="reset" onlongpress="reset">RESET</text>
+</div>

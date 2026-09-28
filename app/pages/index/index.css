@@ -1,0 +1,55 @@
+.container {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  left: 0px;
+  top: 0px;
+  width: 466px;
+  height: 466px;
+  background-color: #000000;
+}
+
+.score-row {
+  justify-content: center;
+  align-items: center;
+  width: 348px;
+  height: 190px;
+}
+
+.team {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 164px;
+  height: 190px;
+  background-color: #000000;
+  border-width: 3px;
+  border-radius: 24px;
+}
+
+.team-left {
+  border-color: #0088ff;
+}
+
+.team-right {
+  margin-left: 20px;
+  border-color: #ff3333;
+}
+
+.score {
+  font-size: 80px;
+  color: #ffffff;
+  text-align: center;
+  width: 150px;
+  height: 112px;
+}
+
+.reset {
+  font-size: 28px;
+  color: #ffffff;
+  text-align: center;
+  width: 180px;
+  height: 64px;
+  margin-top: 48px;
+  background-color: #000000;
+}
