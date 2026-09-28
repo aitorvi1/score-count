@@ -1,0 +1,48 @@
+{
+  "app": {
+    "bundleName": "com.frontenisscore.app",
+    "version": {
+      "code": 1,
+      "name": "0.1.0"
+    }
+  },
+  "deviceConfig": {},
+  "module": {
+    "deviceType": [
+      "liteWearable"
+    ],
+    "distro": {
+      "deliveryWithInstall": true,
+      "moduleName": "entry",
+      "moduleType": "entry"
+    },
+    "abilities": [
+      {
+        "name": "MainAbility",
+        "label": "$string:app_name",
+        "icon": "$media:app_icon",
+        "type": "page",
+        "srcLanguage": "js",
+        "srcPath": "default",
+        "skills": [
+          {
+            "actions": [
+              "action.system.home"
+            ],
+            "entities": [
+              "entity.system.home"
+            ]
+          }
+        ]
+      }
+    ],
+    "js": [
+      {
+        "name": "MainAbility",
+        "pages": [
+          "pages/index/index"
+        ]
+      }
+    ]
+  }
+}

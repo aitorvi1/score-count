@@ -1,0 +1,8 @@
+{
+  "apiType": "faMode",
+  "targets": [
+    {
+      "name": "default"
+    }
+  ]
+}
