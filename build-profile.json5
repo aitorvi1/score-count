@@ -1,17 +1,41 @@
 {
   "app": {
+    "signingConfigs": [
+      {
+        "name": "frontenisDebug",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "/home/aitor/Documents/frontenis-score/signing/frontenis-debug.cer",
+          "storeFile": "/home/aitor/Documents/frontenis-score/signing/frontenis-debug.p12",
+          "storePassword": "0000001E4FBA6DF3DFB528E1985289DA7FF731C7B7F58F7E211E4DA23593C15ED4F9AC0749C2F6AE24D307D82EFF",
+          "keyAlias": "frontenis-debug",
+          "keyPassword": "0000001E046EC4B63333FAE6D0DF7430130A7ADD3C9F32C180A204A0992017B36B00D0DBE45B64920114ADE444F7",
+          "profile": "/home/aitor/Documents/frontenis-score/signing/frontenis-debug.p7b",
+          "signAlg": "SHA256withECDSA"
+        }
+      }
+    ],
     "products": [
       {
         "name": "default",
+        "signingConfig": "frontenisDebug",
+        "targetSdkVersion": "5.0.0(12)",
+        "compatibleSdkVersion": "5.0.0(12)",
         "runtimeOS": "HarmonyOS",
-        "compileSdkVersion": "6.1.1(24)",
-        "targetSdkVersion": "6.1.1(24)",
-        "compatibleSdkVersion": "4.0.0(10)"
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": false
+          }
+        }
       }
     ],
     "buildModeSet": [
       {
         "name": "debug"
+      },
+      {
+        "name": "release"
       }
     ]
   },

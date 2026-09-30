@@ -2,8 +2,8 @@
   "app": {
     "bundleName": "com.frontenisscore.app",
     "version": {
-      "code": 1,
-      "name": "0.1.0"
+      "code": 10,
+      "name": "0.1.9"
     }
   },
   "deviceConfig": {},
@@ -18,30 +18,21 @@
     },
     "abilities": [
       {
-        "name": "MainAbility",
-        "label": "$string:app_name",
-        "icon": "$media:app_icon",
-        "type": "page",
+        "name": ".MainAbility",
         "srcLanguage": "js",
-        "srcPath": "default",
-        "skills": [
-          {
-            "actions": [
-              "action.system.home"
-            ],
-            "entities": [
-              "entity.system.home"
-            ]
-          }
-        ]
+        "srcPath": "MainAbility",
+        "icon": "$media:icon",
+        "description": "$string:MainAbility_desc",
+        "label": "$string:MainAbility_label",
+        "type": "page"
       }
     ],
     "js": [
       {
-        "name": "MainAbility",
         "pages": [
           "pages/index/index"
-        ]
+        ],
+        "name": ".MainAbility"
       }
     ]
   }

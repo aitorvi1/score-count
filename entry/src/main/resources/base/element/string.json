@@ -1,5 +1,16 @@
 {
   "string": [
-    { "name": "app_name", "value": "FrontenisScore" }
+    {
+      "name": "module_desc",
+      "value": "Score Count"
+    },
+    {
+      "name": "MainAbility_desc",
+      "value": "Frontenis score counter"
+    },
+    {
+      "name": "MainAbility_label",
+      "value": "Score Count"
+    }
   ]
 }

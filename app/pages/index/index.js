@@ -1,30 +1,66 @@
-import storage from '@system.storage';
+import vibrator from '@system.vibrator';
+import file from '@system.file';
 
-const SCORE_KEY = 'frontenisScore';
-let loaded = false;
-let pendingActions = [];
-const pendingWrites = [];
+const SAVE_DIR = 'internal://app/save';
+const SAVE_FILE = 'internal://app/save/score.txt';
+
 let writing = false;
+let pendingValue = null;
 
-function validScore(value) {
-  return typeof value === 'number' && isFinite(value) && value >= 0 &&
-    Math.floor(value) === value ? value : 0;
-}
-
-function writeNextScore() {
-  if (writing || pendingWrites.length === 0) {
-    return;
-  }
+function doWriteScore(value) {
   writing = true;
-  storage.set({
-    key: SCORE_KEY,
-    value: pendingWrites.shift(),
-    fail: function () {
-      console.log('Frontenis Score: could not save scores');
+
+  file.writeText({
+    uri: SAVE_FILE,
+    text: value,
+    encoding: 'UTF-8',
+    append: false,
+
+    success: function () {
     },
+
+    fail: function (data, code) {
+      console.log('Score save failed: ' + code);
+    },
+
     complete: function () {
       writing = false;
-      writeNextScore();
+
+      if (pendingValue !== null) {
+        const next = pendingValue;
+        pendingValue = null;
+        doWriteScore(next);
+      }
+    }
+  });
+}
+
+function writeScore(value) {
+  if (writing) {
+    pendingValue = value;
+    return;
+  }
+
+  file.mkdir({
+    uri: SAVE_DIR,
+    recursive: true,
+
+    success: function () {
+      doWriteScore(value);
+    },
+
+    fail: function () {
+      file.access({
+        uri: SAVE_DIR,
+
+        success: function () {
+          doWriteScore(value);
+        },
+
+        fail: function (data, code) {
+          console.log('Save directory error: ' + code);
+        }
+      });
     }
   });
 }
@@ -32,71 +68,94 @@ function writeNextScore() {
 export default {
   data: {
     scoreA: 0,
-    scoreB: 0
+    scoreB: 0,
+    ignoreNextTapA: false,
+    ignoreNextTapB: false
   },
+
   onInit() {
-    loaded = false;
-    pendingActions = [];
-    storage.get({
-      key: SCORE_KEY,
-      default: '{"scoreA":0,"scoreB":0}',
-      success: (value) => {
-        let scores = {};
-        try {
-          scores = JSON.parse(value) || {};
-        } catch (error) {
-          console.log('Frontenis Score: invalid saved scores');
+    file.readText({
+      uri: SAVE_FILE,
+      encoding: 'UTF-8',
+
+      success: (data) => {
+        const value = data.text;
+        const parts = value.split(',');
+
+        if (parts.length === 2) {
+          const a = parseInt(parts[0]);
+          const b = parseInt(parts[1]);
+
+          this.scoreA = isNaN(a) ? 0 : a;
+          this.scoreB = isNaN(b) ? 0 : b;
         }
-        this.scoreA = validScore(scores.scoreA);
-        this.scoreB = validScore(scores.scoreB);
       },
+
       fail: () => {
         this.scoreA = 0;
         this.scoreB = 0;
-        console.log('Frontenis Score: could not load scores');
-      },
-      complete: () => {
-        loaded = true;
-        // Replay taps made while storage was still loading.
-        const actions = pendingActions;
-        pendingActions = [];
-        actions.forEach((action) => this.changeScore(action));
       }
     });
   },
-  changeScore(action) {
-    if (!loaded) {
-      pendingActions.push(action);
+
+  saveScore() {
+    writeScore(
+      String(this.scoreA) + ',' + String(this.scoreB)
+    );
+  },
+
+  vibrate() {
+    vibrator.vibrate({
+      mode: 'short'
+    });
+  },
+
+  addPointA() {
+    if (this.ignoreNextTapA) {
+      this.ignoreNextTapA = false;
       return;
     }
-    if (action === 'reset') {
-      this.scoreA = 0;
-      this.scoreB = 0;
-    } else if (action === 'addA') {
-      this.scoreA += 1;
-    } else if (action === 'addB') {
-      this.scoreB += 1;
-    } else if (action === 'subtractA') {
-      this.scoreA = Math.max(0, this.scoreA - 1);
-    } else if (action === 'subtractB') {
-      this.scoreB = Math.max(0, this.scoreB - 1);
-    }
-    pendingWrites.push(JSON.stringify({ scoreA: this.scoreA, scoreB: this.scoreB }));
-    writeNextScore();
+
+    this.scoreA += 1;
+    this.saveScore();
+    this.vibrate();
   },
-  addPointA() {
-    this.changeScore('addA');
-  },
+
   addPointB() {
-    this.changeScore('addB');
+    if (this.ignoreNextTapB) {
+      this.ignoreNextTapB = false;
+      return;
+    }
+
+    this.scoreB += 1;
+    this.saveScore();
+    this.vibrate();
   },
+
   subtractPointA() {
-    this.changeScore('subtractA');
+    this.ignoreNextTapA = true;
+
+    if (this.scoreA > 0) {
+      this.scoreA -= 1;
+      this.saveScore();
+      this.vibrate();
+    }
   },
+
   subtractPointB() {
-    this.changeScore('subtractB');
+    this.ignoreNextTapB = true;
+
+    if (this.scoreB > 0) {
+      this.scoreB -= 1;
+      this.saveScore();
+      this.vibrate();
+    }
   },
+
   reset() {
-    this.changeScore('reset');
+    this.scoreA = 0;
+    this.scoreB = 0;
+    this.saveScore();
+    this.vibrate();
   }
 };

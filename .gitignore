@@ -20,3 +20,23 @@ signing/
 *.csr
 *.cer
 *.p7b
+
+# Backups de DevEco/Hvigor
+*.bak-6.0
+
+# HAPs generados/exportados
+*.hap
+
+# Firma / credenciales
+signing/
+*.p12
+*.cer
+*.p7b
+*.csr
+
+# Artefactos generados
+*.hap
+*.bak-6.0
+entry/build/
+app/build/
+.hvigor/
