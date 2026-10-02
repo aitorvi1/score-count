@@ -24,100 +24,135 @@ Ni SDK, perfiles, fuentes ni claves privadas se añaden al repositorio.
 
 ## Compilación y tests nativos
 
+El manifest mantiene `minApiLevel="2.4.0"`. `BehaviorDelegate.onMenu()`,
+`Menu`/`MenuInputDelegate` y `Confirmation`/`ConfirmationDelegate` son APIs 1.0.0.
+No se utiliza Menu2 (API 3.0.0), ni medición de duración de botones físicos,
+ni dependencias de `onKeyPressed()`/`onKeyReleased()`.
+
 | Perfil | Resolución | Release | Tests Run No Evil |
 | --- | --- | --- | --- |
-| `fenix7` | 260 × 260 | Correcta | 17/17 PASS |
-| `fenix7s` | 240 × 240 | Correcta | 17/17 PASS |
-| `epix2` | 416 × 416 | Correcta | 17/17 PASS |
-| `fr255` | 260 × 260, sin táctil | Correcta | 17/17 PASS |
-| `venu2` | 416 × 416 | Correcta | 17/17 PASS |
-| `vivoactive4` | 260 × 260 | Correcta | 17/17 PASS |
+| `fenix7` | 260 × 260 | Correcta | 16/16 PASS |
+| `fenix7s` | 240 × 240 | Correcta | 16/16 PASS |
+| `epix2` | 416 × 416 | Correcta | 16/16 PASS |
+| `fr255` | 260 × 260, sin táctil | Correcta | 16/16 PASS |
+| `venu2` | 416 × 416 | Correcta | 16/16 PASS |
+| `vivoactive4` | 260 × 260 | Correcta | 16/16 PASS |
 
-**Sin errores ni avisos** en las compilaciones finales de aplicación y tests.
-Exportación `monkeyc -e -r` correcta: `ScoreCount.iq`, con seis perfiles y los
-13 destinos de hardware que Garmin agrupa bajo ellos. Se firmó con una clave
-temporal de pruebas externa al repositorio; genera y conserva tu propia clave
-para el reloj y Store. Los `.prg` y `.iq` quedan en `bin/`, ignorados por Git.
+Compilaciones finales de aplicación y tests **sin errores ni avisos**.
+Exportación `monkeyc -e -r` correcta para los seis perfiles y los 13 destinos
+agrupados por Garmin. Firma con clave de prueba externa al repositorio;
+SDK, perfiles, fuentes, claves y binarios no se versionan.
 
-Cada simulador ejecutó estos 17 escenarios sobre el código real:
+Cada perfil ejecutó estos 16 tests sobre la implementación:
 
-1. UP/DOWN cortos, ENTER/START corto y UNDO consecutivo hasta vaciar el historial.
-2. ESC/LAP/LIGHT/MENU devuelven `false` en presión, acción y liberación, sin cambiar el marcador.
-3. Tap izquierdo/derecho, hold de ambos equipos y RESET largo; RESET corto no actúa.
-4. Hold repetido, tap durante hold y tap duplicado tras release no suman;
-   el siguiente tap real vuelve a funcionar.
-5. `12–8 → RESET → reinicio → UNDO → 12–8`, con más UNDO tras otro reinicio.
-6. 40 sumas, conservación de los últimos 25 estados y recuperación tras reinicio.
-   Suma sobre `2147483647` sin desbordamiento de 32 bits.
-7. Restar en cero, RESET en cero y UNDO vacío no escriben ni crean historial.
-8. Fallos de escritura conservan puntuaciones/historial y no generan háptica;
-   recuperación tras un nuevo intento válido.
-9. Almacenamiento malformado y excepción de lectura sin sobrescribir datos ilegibles.
-10. Zonas independientes en 240, 260, 390, 416 y una superficie 360 × 400.
-11. UP/DOWN: 799 ms suma y 800 ms resta, con un único guardado/pulso por cambio.
-12. ENTER a 1500 ms resetea; START a 1499 ms deshace; RESET físico persiste
-    y se deshace también tras reiniciar desde `12–8`.
-13. UP/DOWN/START largos en cero no escriben, vibran ni crean historial.
-    Un segundo RESET en cero conserva el historial útil del primer RESET.
-14. Tres pulsaciones largas consecutivas en cada equipo restan exactamente una vez.
-15. `onKey` antes/después de release, MENU generado por UP largo, auto-repeat,
-    release repetido y eventos sin presión previa no duplican ni inventan cambios.
-16. Dos botones solapados mantienen duraciones independientes; ENTER/START
-    comparten registro y no ejecutan RESET/UNDO dos veces.
-17. Desbordamiento de `System.getTimer()` de positivo a negativo y paso por cero,
-    con umbrales cortos/largos y RESET seguido de UNDO.
+1. `KEY_UP`, `KEY_DOWN`, `KEY_ENTER`/`KEY_START` y UNDO consecutivo.
+2. BACK/ESC/LAP/LIGHT sin consumir; `onBack`, `onNextPage`, `onPreviousPage`
+   y `onSelect` devuelven `false` sin modificar estado, historial ni háptica.
+3. Tap/hold azul y rojo, RESET táctil largo, RESET táctil corto sin efecto.
+4. Hold repetido y tap duplicado durante/después de hold no suman; siguiente tap válido.
+5. RESET y múltiples reinicios conservan puntuación e historial de UNDO.
+6. Historial limitado a 25 estados y puntuaciones superiores al máximo de 32 bits.
+7. Restas en cero, RESET en cero y UNDO vacío sin cambios ni escrituras.
+8. Fallos de escritura preservan estado/historial y no vibran; reintento válido.
+9. Datos malformados y fallo de lectura sin sobrescribir datos ilegibles.
+10. Zonas de interfaz separadas y adaptables a cinco tamaños de pantalla.
+11. Apertura por `onMenu()` y ruta de tecla `KEY_MENU` sin modificar el marcador;
+    identificador de menú desconocido no cambia el estado ni la navegación.
+12. Selecciones reales de `ScoreCountMenuDelegate` restan ambos equipos;
+    restar en cero no escribe, crea historial ni vibra.
+13. RESET solicita confirmación antes de modificar `12–8`; `CONFIRM_YES` guarda
+    `0–0`, persiste tras reiniciar y permite UNDO a `12–8`.
+14. `CONFIRM_NO` conserva puntuaciones, historial, escrituras y háptica.
+15. RESET confirmado en `0–0` no crea una entrada inútil ni reemplaza UNDO útil.
+16. Fallos de almacenamiento durante restas/RESET de menú preservan estado y háptica.
 
-Los tests no convierten un dispositivo sin táctil en táctil: ejercitan los mismos
-handlers de la app por código. Usan memoria para aislar la lógica y un contador
-para confirmar cuándo se solicita feedback. La prueba interactiva siguiente
-verifica adicionalmente eventos y almacenamiento reales del simulador.
+Se conservan los tests de modelo y táctil; se sustituyen los de duración física
+por los del nuevo menú. Los tests usan almacenamiento en memoria y un contador
+háptico, y aíslan las operaciones de navegación nativa. La validación interactiva
+siguiente comprueba además la pila de vistas, los eventos del SDK y Storage real.
 
-En este SDK/Linux, `monkeydo ... -t` devolvió código 1 incluso con resultado
-`PASSED (passed=17, failed=0, errors=0)`. Se comprobaron los resúmenes de Run No
-Evil de los seis modelos, no solo el código de salida del wrapper.
+En SDK 9.2.0/Linux, el wrapper `monkeydo ... -t` puede devolver código 1 aunque
+Run No Evil termine con `PASSED (passed=16, failed=0, errors=0)`. Se verificó ese
+resumen en los seis perfiles: **96/96 tests**, sin fallos ni errores.
 
-## Interacción real en Fenix 7 y Forerunner 255
+## Eventos observados en Fenix 7 y Forerunner 255
 
-Se accionaron los botones del simulador y el ratón sobre la pantalla mediante
-X11. Tras cada paso se capturó el marcador dibujado y se verificaron sus números
-con OCR. No se llamaron directamente métodos del modelo para esta comprobación.
+Se contrastaron la documentación oficial actual, los `simulator.json` de ambos
+perfiles y una aplicación diagnóstica temporal de `BehaviorDelegate`. Esta última
+registró eventos sin modificar Score Count ni su almacén. Ambos perfiles dieron
+el mismo orden de eventos:
 
-En ambos perfiles se comprobaron mediante botones reales del simulador:
+| Entrada | Orden observado en el simulador | Manejo final |
+| --- | --- | --- |
+| UP corto | Press 13; `onPreviousPage`; `onKey(KEY_UP=13)` al soltar; release 13 | El comportamiento devuelve false; la tecla suma azul |
+| DOWN corto | Press 8; `onNextPage`; `onKey(KEY_DOWN=8)` al presionar; release 8 | El comportamiento devuelve false; la tecla suma rojo |
+| START corto | Press 4; `onSelect`; `onKey(KEY_ENTER=4)` al presionar; release 4 | El comportamiento devuelve false; la tecla ejecuta UNDO |
+| Gesto MENU del perfil (mantener UP) | Press 13; `onMenu()` alrededor de 1 s; release 13 | Abre Menu y devuelve true; no llega `onKey(KEY_UP)` ni un segundo `onKey(KEY_MENU)` |
+| BACK/LAP físico del perfil | Press 5; `onBack`; `onKey(KEY_ESC=5)` | Ambos sin consumir en marcador; Garmin sale normalmente |
+
+Los archivos de perfil declaran la tecla `menu` (`KEY_MENU=7`) sobre el mismo
+botón UP con `isHold:true` y `behavior:onMenu`. En la app se procesa primero ese
+comportamiento nativo; una ruta de `KEY_MENU` queda para perfiles que entreguen
+la tecla sin mapear el comportamiento. El botón rotulado START de estos perfiles
+entrega **KEY_ENTER**, no KEY_START. BACK/LAP entrega **KEY_ESC**, no KEY_LAP.
+Los alias KEY_START/KEY_LAP se cubren en tests, sin afirmar que se hayan emitido
+interactivamente. LIGHT no se expone como tecla en estos dos perfiles; su
+comportamiento del firmware queda para hardware.
+
+La sonda también mantuvo DOWN y START: el SDK entregó su acción normal al
+presionar y luego release, sin simular música ni hotkeys. Por tanto, ese resultado
+no demuestra qué ocurrirá al mantenerlos en un reloj. La app no asigna funciones
+especiales a duración física y no necesita recibir press/release para puntuar.
+
+En Fenix 7, los perfiles también asignan swipes verticales a Next/PreviousPage y
+tap a Select. Esos callbacks retornan `false` sin acciones. Se comprobaron ambos
+swipes sin cambios y taps sumando, sin que un tap ejecute UNDO.
+
+## Interacción con la aplicación en ambos simuladores
+
+Se usaron botones de la carcasa y ratón mediante X11 sobre las compilaciones
+reales. Se verificaron capturas con OCR después de cada paso, sin invocar el modelo
+por código ni modificar directamente Storage.
 
 | Secuencia | Estado verificado |
 | --- | --- |
-| START largo inicial | 0–0 |
-| UP corto, DOWN corto, DOWN corto | 1–2 |
-| START corto tres veces | 1–1, 1–0, 0–0 |
-| Dos UP cortos y dos DOWN cortos | 2–2 |
-| UP largo, DOWN largo, UP largo, DOWN largo | 1–2, 1–1, 0–1, 0–0 |
-| UP/DOWN largos y RESET largo en cero | 0–0 |
-| Doce UP cortos y ocho DOWN cortos | 12–8 |
-| START largo dos veces | 0–0; no añade un segundo RESET |
-| START corto | 12–8 |
-| BACK, reabrir mismo `.prg` | 12–8 persistente |
-| START corto después de reabrir | 12–7; historial persistente |
+| MENU → Reset marcador → confirmar | 0–0 inicial |
+| UP, DOWN, DOWN cortos | 1–2 |
+| START tres veces | 1–1, 1–0, 0–0 |
+| Dos UP y dos DOWN | 2–2 |
+| MENU → −1 azul / −1 rojo, dos veces cada uno | 1–2, 1–1, 0–1, 0–0 |
+| Restas de menú en cero | 0–0, retorna al marcador |
+| BACK desde menú | Retorna al marcador sin cambios |
+| Doce UP y ocho DOWN | 12–8 |
+| MENU → Reset marcador → cancelar con BACK | 12–8, retorna directamente al marcador |
+| MENU → Reset marcador → confirmar | 0–0 |
+| Segundo RESET confirmado en cero, START | 12–8; no se inserta otro RESET |
+| BACK, relanzar mismo PRG, START | 12–8 persistente; UNDO a 12–7 |
+| RESET confirmado, BACK, relanzar, START | 0–0 persistente; UNDO a 12–7 |
 
-Los UP/DOWN largos se mantuvieron **1,05 s**, y START largo **1,7 s**.
-La comprobación posterior a release confirma que no se añade una acción corta.
-Forerunner 255 completa todas las funciones exclusivamente con botones.
+La apertura de menú usó exclusivamente el gesto MENU proporcionado por el
+perfil, manteniendo UP hasta que Garmin entregó `onMenu()`. El menú se navega
+con UP/DOWN y se selecciona con START. El marcador no recibe esas teclas mientras
+el menú o la confirmación están activos. En la confirmación, START confirma y
+BACK cancela.
 
-En Fenix 7 se repitieron además tap azul/rojo, hold azul/rojo, holds en cero,
-tap posterior a hold, RESET táctil corto sin efecto, RESET táctil largo,
-UNDO del RESET táctil y swipe vertical sin sumas. Los holds táctiles de 1,2 s
-solo restaron una vez. Los controles táctiles conservan su guardia de 200 ms.
+Se comprobó la navegación del menú clásico: una selección normal de resta cierra
+Menu por defecto. Un `popView()` adicional cerraría el marcador. RESET sí elimina
+explícitamente Menu antes de insertar Confirmation, para que cancelar no deje al
+usuario dentro del menú. Confirmation se cierra mediante la navegación nativa;
+no se hace otro pop en su respuesta. Las pruebas verifican las vueltas al marcador,
+además de los valores del modelo.
 
-Se inspeccionó además el orden real de eventos con una aplicación diagnóstica
-temporal: DOWN/ENTER pueden enviar `onKey()` al presionar, y UP mantenido genera
-`KEY_MENU` a aproximadamente 1 s antes de `onKeyReleased(KEY_UP)`. Por eso
-`onKey()` no modifica puntuaciones. MENU se devuelve sin consumir y no altera
-el registro del UP que después se libera. Esa aplicación no se incluye en el
-repositorio ni comparte almacenamiento con Score Count.
+En Fenix 7 se repitieron tap azul/rojo, hold azul/rojo, holds estando en cero,
+tap posterior a hold, RESET táctil corto/largo, UNDO del RESET táctil y swipes
+verticales en ambos sentidos. Cada hold táctil restó una sola vez; se conserva
+la protección de 200 ms frente a tap duplicado. Forerunner 255 completó todas
+las acciones con los botones y el menú, sin touchscreen.
 
-BACK cerró la aplicación con normalidad en ambos perfiles. LIGHT no se intercepta;
-se verifican sus tres handlers con tests. Estos perfiles de simulador no exponen
-LIGHT como evento de la app: la iluminación y los menús/reservas de botones del
-firmware deben comprobarse también en los relojes físicos.
+Capturas nativas de Fenix 7:
+
+![Menú nativo con las tres acciones](docs/images/fenix7-menu.png)
+![Confirmación nativa antes de RESET](docs/images/fenix7-reset-confirmation.png)
 
 ## Revisión visual
 
@@ -142,8 +177,11 @@ el marcador. El aviso de almacenamiento sigue apareciendo si hay un fallo real.
 
 ## Pendiente de hardware y publicación
 
+- Acceso a MENU con el firmware y las hotkeys reales de Fenix 7 y FR255: mantener
+  UP puede estar reservado, DOWN puede abrir música, y START/combinaciones pueden
+  activar atajos del sistema. El simulador no reproduce todas estas reservas.
 - Sensación/intensidad de vibración, touchscreen real, bloqueo táctil del reloj,
-  iluminación y salida/navegación sobre firmware del Fenix 7 físico.
+  iluminación y salida/navegación sobre firmware físico.
 - Legibilidad al sol en MIP, brillo/consumo AMOLED y uso durante un partido.
 - Pruebas físicas de los demás productos antes de ofrecerlos como compatibilidad
   verificada en hardware. Actualmente se declaran como validados en simulador.

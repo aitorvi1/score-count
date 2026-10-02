@@ -4,4 +4,8 @@
     <string id="RedTeam">ROJO</string>
     <string id="Reset">RESET</string>
     <string id="SaveError">ERROR GUARDADO</string>
+    <string id="SubtractBlue">-1 azul</string>
+    <string id="SubtractRed">-1 rojo</string>
+    <string id="ResetScore">Reset marcador</string>
+    <string id="ConfirmReset">¿Resetear marcador?</string>
 </strings>

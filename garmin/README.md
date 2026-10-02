@@ -91,30 +91,51 @@ python3 tools/build.py --sdk /ruta/al/sdk --key /ruta/privada/developer_key.der 
 
 | Entrada | Acción |
 | --- | --- |
-| UP corto (<800 ms) | +1 azul |
-| UP largo (≥800 ms) | −1 azul, mínimo 0 |
-| DOWN corto (<800 ms) | +1 rojo |
-| DOWN largo (≥800 ms) | −1 rojo, mínimo 0 |
-| START/ENTER corto (<1500 ms) | UNDO |
-| START/ENTER largo (≥1500 ms) | RESET a 0–0, deshacible |
-| BACK/LAP | Comportamiento estándar Garmin; evento no consumido |
+| UP corto (`KEY_UP`) | +1 azul |
+| DOWN corto (`KEY_DOWN`) | +1 rojo |
+| START/ENTER corto (`KEY_ENTER` o `KEY_START`) | UNDO |
+| MENU nativo (`onMenu()`) | Abre el menú de Score Count |
+| Menú: −1 azul | Resta azul, mínimo 0, y vuelve al marcador |
+| Menú: −1 rojo | Resta rojo, mínimo 0, y vuelve al marcador |
+| Menú: Reset marcador | Pide confirmación nativa antes de resetear |
+| Confirmar RESET | 0–0, persistente y deshacible |
+| Cancelar confirmación / BACK | Vuelve al marcador sin modificarlo |
+| BACK/LAP en marcador | Comportamiento estándar Garmin; evento no consumido |
 | LIGHT | Iluminación estándar Garmin; evento no consumido |
-| MENU | Comportamiento estándar Garmin; evento no consumido |
 | Toque en azul/rojo | +1 en esa zona |
-| Pulsación larga en azul/rojo | −1 en esa zona, mínimo 0 |
-| Pulsación larga en RESET | 0–0, deshacible |
+| Pulsación larga táctil en azul/rojo | −1 en esa zona, mínimo 0 |
+| Pulsación larga táctil en RESET | 0–0, deshacible; conserva el flujo táctil existente |
 | Toque corto en RESET | Sin cambio |
 
-Los controles físicos se aplican tanto con touchscreen como sin él, cuando el
-producto exponga esas teclas. La acción se ejecuta **al soltar** el botón: se mide
-la duración con `System.getTimer()` entre `onKeyPressed()` y `onKeyReleased()`,
-sin esperas ni temporizadores bloqueantes. Solo la liberación modifica el modelo;
-`onKey()` consume las teclas asignadas sin ejecutar otra acción. Una pulsación
-larga nunca suma ni deshace además al soltar. Se ignoran repeticiones de presión
-y liberaciones sin presión previa; ENTER/START comparten el mismo registro.
-La diferencia se calcula en 64 bits y corrige el desbordamiento del contador
-de 32 bits. MENU sigue devolviendo `false`, incluso si Garmin lo genera durante
-un UP largo: no se convierte en otra modificación del marcador.
+La app usa `WatchUi.BehaviorDelegate`, que hereda de `InputDelegate`. Garmin
+procesa primero el comportamiento nativo; `onMenu()` abre `WatchUi.Menu` y
+retorna `true`, impidiendo otro procesamiento de esa misma entrada como tecla.
+El menú usa `MenuInputDelegate`. RESET abre `WatchUi.Confirmation` y su
+`ConfirmationDelegate`: solo `CONFIRM_YES` llama a `ScoreModel.reset()`.
+Ambas vistas están disponibles desde API 1.0.0; el manifest mantiene **2.4.0**.
+El menú se cierra antes de abrir la confirmación, de modo que tanto confirmar
+como cancelar vuelven directamente al marcador. BACK desde el menú también
+vuelve al marcador mediante la navegación de Garmin.
+
+En Fenix 7 y Forerunner 255, el perfil del SDK asigna MENU a mantener UP: usa
+**el gesto de menú que proporciona Garmin**, no una pulsación larga medida por
+Score Count. En Venu 2 y vívoactive 4, el perfil lo asigna a mantener el botón
+inferior BACK. El firmware y las hotkeys personales pueden reservar o cambiar
+esos gestos: comprueba el acceso al menú nativo en tu reloj. La app no mide
+pulsaciones largas físicas ni implementa combinaciones, música o hotkeys.
+
+Los botones de puntuación se distinguen explícitamente en `onKey()`. Los callbacks
+`onPreviousPage()`, `onNextPage()` y `onSelect()` devuelven `false` sin modificar
+nada, dejando pasar las teclas y el táctil a sus handlers correspondientes.
+Así, un swipe no suma ni un tap ejecuta UNDO. MENU también dispone de una ruta
+`KEY_MENU → onMenu()` para un perfil que entregue la tecla sin el comportamiento.
+BACK/LAP/LIGHT no se consumen en el marcador. No se sobrescriben `onKeyPressed()`
+ni `onKeyReleased()`; no se presupone recibirlos para una acción esencial.
+En los perfiles probados, DOWN/ENTER entregan su acción al presionar: si los
+mantienes, pueden entregar esa misma acción corta antes de que el firmware abra
+música o una hotkey. La app no promete suprimir eventos que el sistema ya haya
+entregado ni controlar las acciones reservadas por el firmware. Usa los botones
+cortos y el menú nativo para el marcador.
 
 Las zonas activas coinciden con las tarjetas y el rectángulo RESET. Los márgenes
 y el espacio central no suman. No hay acciones asignadas a swipes ni a gestos
@@ -126,9 +147,9 @@ aunque no haya llegado un tap duplicado.
 Cada cambio válido genera un pulso de 80 ms si la vibración está disponible y
 habilitada. Restar en cero, UNDO sin historial y RESET en 0–0 no cambian el estado,
 no crean historial ni vibran. **Forerunner 255, sin touchscreen, dispone de todas
-las acciones** mediante pulsaciones cortas/largas. En Venu/vívoactive, que no
-exponen UP/DOWN en estos perfiles, sumar/restar sigue disponible por táctil;
-UNDO y RESET físicos usan la tecla ENTER/START que exponga Garmin.
+las acciones** mediante botones cortos y el menú nativo. En Venu/vívoactive,
+que no exponen UP/DOWN en estos perfiles, sumar/restar sigue disponible por
+táctil; UNDO usa ENTER/START y restas/RESET también están en el menú.
 
 ## Compatibilidad declarada
 
@@ -164,7 +185,8 @@ monkey.jungle                 Configuración del proyecto
 source/ScoreCountApp.mc       Ciclo de vida y composición
 source/ScoreModel.mc          Puntuaciones, historial, validación y ScoreStore
 source/ScoreCountView.mc      Dibujo y selección de fuentes
-source/ScoreCountDelegate.mc  InputDelegate, acciones compartidas y háptica
+source/ScoreCountDelegate.mc  BehaviorDelegate, teclas explícitas, táctil y háptica
+source/ScoreCountMenuDelegate.mc  Selección de menú y respuesta a confirmación
 source/ScoreLayout.mc         Dimensiones y zonas de dibujo/entrada
 source/TouchGesture.mc        Hold/release y protección de duplicados
 resources*/                  Icono reutilizado de Huawei y strings ES/EN
@@ -174,8 +196,9 @@ tools/build.py               Construcción por manifest y exportación
 ```
 
 UP corto y tap azul llaman a `addBluePoint()`; DOWN corto y tap rojo a
-`addRedPoint()`. UP/DOWN largo y hold táctil llaman a las mismas restas;
-START largo y hold RESET llaman a `reset()`. START corto llama a `undo()`.
+`addRedPoint()`. Las restas del menú y los holds táctiles llaman a las mismas
+restas de `ScoreModel`; RESET confirmado y hold RESET llaman a `reset()`.
+START corto llama a `undo()`. El menú no modifica el modelo al abrirse o cancelarse.
 El modelo prepara el nuevo estado, lo guarda, publica el cambio y devuelve si
 hubo modificación. La entrada solicita `WatchUi.requestUpdate()` y genera
 háptica. Garmin programa el redibujado: `requestUpdate()` no es síncrono, por lo
@@ -211,11 +234,10 @@ monkeyc -f 'monkey.jungle;tests.jungle' -d fenix7 -t \
 monkeydo bin/ScoreCount-tests-fenix7.prg fenix7 -t
 ```
 
-Repite con los demás modelos. Los 17 tests cubren botones cortos/largos, límites
-de 800/1500 ms, repeticiones, ausencia de dobles eventos, teclas no asignadas,
-presiones simultáneas y desbordamiento del temporizador; también UNDO múltiple, mínimo
-cero, RESET deshacible, reinicio con historial, 25 estados, puntuaciones superiores
-a 32 bits, fallos de almacenamiento, distintas resoluciones y hold/release/tap.
+Repite con los demás modelos. Los 16 tests cubren teclas explícitas y UNDO múltiple,
+navegación sin cambios, apertura de menú, restas y acciones en cero, RESET
+confirmado/cancelado, persistencia e historial tras RESET, fallos de almacenamiento,
+25 estados, puntuaciones superiores a 32 bits, resoluciones y hold/release/tap.
 Usan almacén en memoria y contador háptico para no modificar el marcador real.
 La persistencia real y los eventos del simulador se verifican adicionalmente
 según [TESTING.md](TESTING.md).
@@ -239,8 +261,9 @@ según [TESTING.md](TESTING.md).
    tu sistema. El `.iq` es para Store, no para copiar al reloj.
 5. Expulsa de forma segura, desconecta y abre **Score Count** desde las apps del
    reloj. Habilita el táctil si está desactivado para las aplicaciones.
-6. Prueba botones cortos/largos, hold en equipos/RESET, BACK/LIGHT/MENU y reentrada con marcador e
-   historial. Comprueba háptica real y legibilidad al sol.
+6. Prueba UP/DOWN/START cortos, menú con restas y RESET confirmado/cancelado,
+   hold táctil en equipos/RESET, BACK/LIGHT y reentrada con marcador e historial.
+   Comprueba háptica, legibilidad al sol y acceso a MENU con tus hotkeys configuradas.
 
 Para actualizar, cierra la app y reemplaza el mismo `.prg` conservando nombre y
 UUID. Desinstalar o borrar datos elimina la persistencia. No se promete migración
@@ -273,8 +296,11 @@ revisión y publicación requieren tu cuenta Garmin y quedan fuera de esta imple
 
 ## APIs verificadas
 
-- [InputDelegate](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/InputDelegate.html): onKeyPressed/onKeyReleased/onKey y onTap/onHold/onRelease.
-- [System.getTimer](https://developer.garmin.com/connect-iq/api-docs/Toybox/System.html#getTimer-instance_function): duración en ms y desbordamiento periódico.
+- [BehaviorDelegate](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/BehaviorDelegate.html): onMenu y prioridad sobre los eventos básicos.
+- [InputDelegate](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/InputDelegate.html): onKey explícito y onTap/onHold/onRelease.
+- [Menu](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/Menu.html) / MenuInputDelegate: menú nativo, API 1.0.0.
+- [Confirmation](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/Confirmation.html) / ConfirmationDelegate: respuesta CONFIRM_YES/NO, API 1.0.0.
+- [System.getTimer](https://developer.garmin.com/connect-iq/api-docs/Toybox/System.html#getTimer-instance_function): guardia de duplicados táctiles; no se usa para duración de botones físicos.
 - [WatchUi](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi.html): KEY_* y requestUpdate.
 - [Application.Storage](https://developer.garmin.com/connect-iq/api-docs/Toybox/Application/Storage.html): mínimo API 2.4.0.
 - [Attention](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html): vibrate/VibeProfile con comprobación `has`.

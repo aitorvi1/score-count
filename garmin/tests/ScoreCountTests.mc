@@ -28,21 +28,26 @@ class MemoryScoreStore extends ScoreStore {
 (:test)
 class RecordingDelegate extends ScoreCountDelegate {
     var vibrations = 0;
+    var menuOpens = 0;
+    var menuCloses = 0;
+    var confirmations = 0;
+    var menuDelegate;
+    var confirmationDelegate;
 
     function initialize(model, layout) {
         ScoreCountDelegate.initialize(model, layout);
     }
 
     function _vibrate() { vibrations += 1; }
-}
-
-function pressKey(delegate, key, duration) {
-    // Exercise the same handlers as SDK callbacks, with action events both before
-    // and after release. Neither action event is allowed to modify the score.
-    return delegate.handleKeyPressed(key, 10000) &&
-           delegate.handleKey(key) &&
-           delegate.handleKeyReleased(key, 10000 + duration) &&
-           delegate.handleKey(key);
+    function _pushMenu(menu, delegate) {
+        menuOpens += 1;
+        menuDelegate = delegate;
+    }
+    function _closeMenu() { menuCloses += 1; }
+    function _pushResetConfirmation(delegate) {
+        confirmations += 1;
+        confirmationDelegate = delegate;
+    }
 }
 
 (:test)
@@ -52,34 +57,36 @@ function buttonsAndMultipleUndo(logger) {
     var delegate = new RecordingDelegate(model, new ScoreLayout());
     Test.assertEqual(model.getScoreBlue(), 0l);
     Test.assertEqual(model.getScoreRed(), 0l);
-    Test.assert(pressKey(delegate, WatchUi.KEY_UP, 100));
-    Test.assert(pressKey(delegate, WatchUi.KEY_DOWN, 100));
-    Test.assert(pressKey(delegate, WatchUi.KEY_DOWN, 100));
+    Test.assert(delegate.handleKey(WatchUi.KEY_UP));
+    Test.assert(delegate.handleKey(WatchUi.KEY_DOWN));
+    Test.assert(delegate.handleKey(WatchUi.KEY_DOWN));
     Test.assertEqual(model.getScoreBlue(), 1l);
     Test.assertEqual(model.getScoreRed(), 2l);
-    Test.assert(pressKey(delegate, WatchUi.KEY_ENTER, 100));
-    Test.assert(pressKey(delegate, WatchUi.KEY_START, 100));
+    Test.assert(delegate.handleKey(WatchUi.KEY_ENTER));
+    Test.assert(delegate.handleKey(WatchUi.KEY_START));
     Test.assertEqual(model.getScoreRed(), 0l);
-    pressKey(delegate, WatchUi.KEY_START, 100);
+    delegate.handleKey(WatchUi.KEY_START);
     Test.assertEqual(model.getScoreBlue(), 0l);
     Test.assertEqual(model.getHistorySize(), 0);
-    pressKey(delegate, WatchUi.KEY_START, 100);
+    delegate.handleKey(WatchUi.KEY_START);
     Test.assertEqual(delegate.vibrations, 6);
     Test.assertEqual(store.writes, 6);
     return true;
 }
 
 (:test)
-function garminKeysAndSwipesStayUnassigned(logger) {
+function garminKeysAndNavigationStayUnassigned(logger) {
     var store = new MemoryScoreStore();
     var model = new ScoreModel(store);
     var delegate = new RecordingDelegate(model, new ScoreLayout());
-    var keys = [WatchUi.KEY_ESC, WatchUi.KEY_LAP, WatchUi.KEY_LIGHT, WatchUi.KEY_MENU];
+    var keys = [WatchUi.KEY_ESC, WatchUi.KEY_LAP, WatchUi.KEY_LIGHT];
     for (var i = 0; i < keys.size(); i += 1) {
-        Test.assert(!delegate.handleKeyPressed(keys[i], 100));
         Test.assert(!delegate.handleKey(keys[i]));
-        Test.assert(!delegate.handleKeyReleased(keys[i], 2000));
     }
+    Test.assert(!delegate.onBack());
+    Test.assert(!delegate.onPreviousPage());
+    Test.assert(!delegate.onNextPage());
+    Test.assert(!delegate.onSelect());
     Test.assertEqual(delegate.vibrations, 0);
     Test.assertEqual(store.writes, 0);
     return true;
@@ -118,7 +125,7 @@ function touchActionsAndProtectedReset(logger) {
     delegate.handleRelease(2500);
     Test.assertEqual(model.getScoreBlue(), 0l);
     Test.assertEqual(model.getScoreRed(), 0l);
-    pressKey(delegate, WatchUi.KEY_START, 100);
+    delegate.handleKey(WatchUi.KEY_START);
     Test.assertEqual(model.getScoreBlue(), 1l);
     Test.assertEqual(model.getScoreRed(), 1l);
     return true;
@@ -203,9 +210,9 @@ function failedWritesPreserveScoreAndUndo(logger) {
     var store = new MemoryScoreStore();
     var model = new ScoreModel(store);
     var delegate = new RecordingDelegate(model, new ScoreLayout());
-    pressKey(delegate, WatchUi.KEY_UP, 100);
+    delegate.handleKey(WatchUi.KEY_UP);
     store.failWrite = true;
-    pressKey(delegate, WatchUi.KEY_DOWN, 100);
+    delegate.handleKey(WatchUi.KEY_DOWN);
     Test.assert(model.hasStorageError());
     Test.assertEqual(model.getScoreRed(), 0l);
     Test.assertEqual(model.getHistorySize(), 1);
@@ -262,166 +269,161 @@ function layoutAdaptsAndKeepsSeparateTargets(logger) {
 }
 
 (:test)
-function pointKeyThresholds(logger) {
+function menuOpensWithoutChangingScores(logger) {
     var store = new MemoryScoreStore();
     var model = new ScoreModel(store);
     var delegate = new RecordingDelegate(model, new ScoreLayout());
-    Test.assert(pressKey(delegate, WatchUi.KEY_UP, 799));
-    Test.assert(pressKey(delegate, WatchUi.KEY_DOWN, 799));
-    Test.assertEqual(model.getScoreBlue(), 1l);
-    Test.assertEqual(model.getScoreRed(), 1l);
-    Test.assert(pressKey(delegate, WatchUi.KEY_UP, 800));
+    Test.assert(delegate.onMenu());
+    Test.assertEqual(delegate.menuOpens, 1);
+    Test.assert(delegate.menuDelegate instanceof ScoreCountMenuDelegate);
+    Test.assert(delegate.handleKey(WatchUi.KEY_MENU)); // raw-key fallback
+    Test.assertEqual(delegate.menuOpens, 2);
+    Test.assert(!delegate.handleMenuItem(:unknown));
+    Test.assertEqual(delegate.menuCloses, 0);
+    Test.assertEqual(delegate.confirmations, 0);
     Test.assertEqual(model.getScoreBlue(), 0l);
-    Test.assertEqual(model.getScoreRed(), 1l);
-    Test.assert(pressKey(delegate, WatchUi.KEY_DOWN, 800));
     Test.assertEqual(model.getScoreRed(), 0l);
-    Test.assertEqual(model.getHistorySize(), 4);
-    Test.assertEqual(delegate.vibrations, 4);
-    Test.assertEqual(store.writes, 4);
+    Test.assertEqual(model.getHistorySize(), 0);
+    Test.assertEqual(store.writes, 0);
+    Test.assertEqual(delegate.vibrations, 0);
     return true;
 }
 
 (:test)
-function startThresholdAndResetUndo(logger) {
+function menuSubtractsBothTeamsAndPreservesZero(logger) {
+    var store = new MemoryScoreStore();
+    var model = new ScoreModel(store);
+    var delegate = new RecordingDelegate(model, new ScoreLayout());
+    delegate.handleKey(WatchUi.KEY_UP);
+    delegate.handleKey(WatchUi.KEY_DOWN);
+    delegate.onMenu();
+    delegate.menuDelegate.onMenuItem(:subtractBlue);
+    Test.assertEqual(model.getScoreBlue(), 0l);
+    Test.assertEqual(model.getScoreRed(), 1l);
+    delegate.onMenu();
+    delegate.menuDelegate.onMenuItem(:subtractRed);
+    Test.assertEqual(model.getScoreRed(), 0l);
+    Test.assertEqual(store.writes, 4);
+    Test.assertEqual(delegate.vibrations, 4);
+    delegate.onMenu();
+    delegate.menuDelegate.onMenuItem(:subtractBlue);
+    delegate.onMenu();
+    delegate.menuDelegate.onMenuItem(:subtractRed);
+    // Garmin dismisses normal menu selections; only RESET needs an explicit pop.
+    Test.assertEqual(delegate.menuCloses, 0);
+    Test.assertEqual(store.writes, 4);
+    Test.assertEqual(delegate.vibrations, 4);
+    Test.assertEqual(model.getHistorySize(), 4);
+    Test.assertEqual(delegate.confirmations, 0);
+    return true;
+}
+
+(:test)
+function confirmedMenuResetPersistsAndCanBeUndone(logger) {
     var store = new MemoryScoreStore();
     var model = new ScoreModel(store);
     var delegate = new RecordingDelegate(model, new ScoreLayout());
     for (var i = 0; i < 12; i += 1) { model.addBluePoint(); }
     for (var i = 0; i < 8; i += 1) { model.addRedPoint(); }
-    Test.assert(pressKey(delegate, WatchUi.KEY_ENTER, 1500));
+    delegate.onMenu();
+    delegate.menuDelegate.onMenuItem(:resetScore);
+    Test.assertEqual(delegate.menuCloses, 1);
+    Test.assertEqual(delegate.confirmations, 1);
+    Test.assert(delegate.confirmationDelegate instanceof ScoreResetConfirmationDelegate);
+    Test.assertEqual(model.getScoreBlue(), 12l);
+    Test.assertEqual(model.getScoreRed(), 8l);
+    Test.assertEqual(store.writes, 20);
+    Test.assertEqual(delegate.vibrations, 0);
+    Test.assert(delegate.confirmationDelegate.onResponse(WatchUi.CONFIRM_YES));
     Test.assertEqual(model.getScoreBlue(), 0l);
     Test.assertEqual(model.getScoreRed(), 0l);
     Test.assertEqual(model.getHistorySize(), 21);
-    Test.assert(pressKey(delegate, WatchUi.KEY_START, 1499));
-    Test.assertEqual(model.getScoreBlue(), 12l);
-    Test.assertEqual(model.getScoreRed(), 8l);
-    Test.assert(pressKey(delegate, WatchUi.KEY_START, 2000));
+    Test.assertEqual(store.writes, 21);
+    Test.assertEqual(delegate.vibrations, 1);
     var restarted = new ScoreModel(store);
     Test.assertEqual(restarted.getScoreBlue(), 0l);
     Test.assertEqual(restarted.getScoreRed(), 0l);
-    Test.assert(restarted.undo());
+    var restartedInput = new RecordingDelegate(restarted, new ScoreLayout());
+    restartedInput.handleKey(WatchUi.KEY_ENTER);
     Test.assertEqual(restarted.getScoreBlue(), 12l);
     Test.assertEqual(restarted.getScoreRed(), 8l);
-    Test.assertEqual(delegate.vibrations, 3);
+    Test.assertEqual(restartedInput.vibrations, 1);
+    var restartedAgain = new ScoreModel(store);
+    Test.assertEqual(restartedAgain.getScoreBlue(), 12l);
+    Test.assertEqual(restartedAgain.getScoreRed(), 8l);
     return true;
 }
 
 (:test)
-function zeroLongKeysLeaveHistoryAndHapticsAlone(logger) {
+function cancelledMenuResetLeavesEverythingUntouched(logger) {
     var store = new MemoryScoreStore();
     var model = new ScoreModel(store);
     var delegate = new RecordingDelegate(model, new ScoreLayout());
-    pressKey(delegate, WatchUi.KEY_UP, 3000);
-    pressKey(delegate, WatchUi.KEY_DOWN, 3000);
-    pressKey(delegate, WatchUi.KEY_START, 3000);
+    model.addBluePoint();
+    model.addRedPoint();
+    delegate.onMenu();
+    delegate.menuDelegate.onMenuItem(:resetScore);
+    Test.assert(delegate.confirmationDelegate.onResponse(WatchUi.CONFIRM_NO));
+    Test.assertEqual(model.getScoreBlue(), 1l);
+    Test.assertEqual(model.getScoreRed(), 1l);
+    Test.assertEqual(model.getHistorySize(), 2);
+    Test.assertEqual(store.writes, 2);
+    Test.assertEqual(delegate.vibrations, 0);
+    Test.assertEqual(delegate.menuCloses, 1);
+    delegate.handleKey(WatchUi.KEY_START);
+    Test.assertEqual(model.getScoreBlue(), 1l);
+    Test.assertEqual(model.getScoreRed(), 0l);
+    return true;
+}
+
+(:test)
+function confirmedMenuResetInZeroDoesNotReplaceUndo(logger) {
+    var store = new MemoryScoreStore();
+    var model = new ScoreModel(store);
+    var delegate = new RecordingDelegate(model, new ScoreLayout());
+    delegate.onMenu();
+    delegate.menuDelegate.onMenuItem(:resetScore);
+    delegate.confirmationDelegate.onResponse(WatchUi.CONFIRM_YES);
     Test.assertEqual(store.writes, 0);
     Test.assertEqual(delegate.vibrations, 0);
     Test.assertEqual(model.getHistorySize(), 0);
     model.addBluePoint();
     model.reset();
-    // A zero score may still have useful UNDO history. A second reset preserves it.
-    pressKey(delegate, WatchUi.KEY_ENTER, 1500);
+    delegate.onMenu();
+    delegate.menuDelegate.onMenuItem(:resetScore);
+    delegate.confirmationDelegate.onResponse(WatchUi.CONFIRM_YES);
     Test.assertEqual(store.writes, 2);
     Test.assertEqual(model.getHistorySize(), 2);
     Test.assertEqual(delegate.vibrations, 0);
-    pressKey(delegate, WatchUi.KEY_ENTER, 100);
+    delegate.handleKey(WatchUi.KEY_START);
     Test.assertEqual(model.getScoreBlue(), 1l);
-    Test.assertEqual(delegate.vibrations, 1);
     return true;
 }
 
 (:test)
-function consecutiveLongKeysApplyExactlyOnce(logger) {
-    var store = new MemoryScoreStore();
-    var model = new ScoreModel(store);
-    var delegate = new RecordingDelegate(model, new ScoreLayout());
-    for (var i = 0; i < 3; i += 1) {
-        model.addBluePoint();
-        model.addRedPoint();
-    }
-    for (var i = 0; i < 3; i += 1) {
-        pressKey(delegate, WatchUi.KEY_UP, 1200);
-        pressKey(delegate, WatchUi.KEY_DOWN, 1200);
-        Test.assertEqual(model.getScoreBlue(), (2 - i).toLong());
-        Test.assertEqual(model.getScoreRed(), (2 - i).toLong());
-    }
-    Test.assertEqual(delegate.vibrations, 6);
-    Test.assertEqual(store.writes, 12);
-    Test.assertEqual(model.getHistorySize(), 12);
-    return true;
-}
-
-(:test)
-function actionAndRepeatedReleaseEventsCannotDuplicateChanges(logger) {
+function menuWriteFailuresPreserveStateAndHaptics(logger) {
     var store = new MemoryScoreStore();
     var model = new ScoreModel(store);
     var delegate = new RecordingDelegate(model, new ScoreLayout());
     model.addBluePoint();
-    delegate.handleKeyPressed(WatchUi.KEY_UP, 100);
-    delegate.handleKey(WatchUi.KEY_UP);
-    // Fenix/FR may synthesize MENU while the raw UP press is still active.
-    Test.assert(!delegate.handleKey(WatchUi.KEY_MENU));
-    delegate.handleKeyPressed(WatchUi.KEY_UP, 800);
+    model.addRedPoint();
+    store.failWrite = true;
+    delegate.onMenu();
+    delegate.menuDelegate.onMenuItem(:subtractBlue);
+    delegate.onMenu();
+    delegate.menuDelegate.onMenuItem(:subtractRed);
+    delegate.onMenu();
+    delegate.menuDelegate.onMenuItem(:resetScore);
+    delegate.confirmationDelegate.onResponse(WatchUi.CONFIRM_YES);
+    Test.assert(model.hasStorageError());
     Test.assertEqual(model.getScoreBlue(), 1l);
-    delegate.handleKeyReleased(WatchUi.KEY_UP, 900);
-    delegate.handleKey(WatchUi.KEY_UP);
-    delegate.handleKeyReleased(WatchUi.KEY_UP, 1000);
-    Test.assertEqual(model.getScoreBlue(), 0l);
-    Test.assertEqual(delegate.vibrations, 1);
+    Test.assertEqual(model.getScoreRed(), 1l);
+    Test.assertEqual(model.getHistorySize(), 2);
     Test.assertEqual(store.writes, 2);
-    // Unpaired events must never guess a short press.
-    delegate.handleKey(WatchUi.KEY_DOWN);
-    delegate.handleKeyReleased(WatchUi.KEY_DOWN, 1200);
+    Test.assertEqual(delegate.vibrations, 0);
+    store.failWrite = false;
+    delegate.handleKey(WatchUi.KEY_ENTER);
     Test.assertEqual(model.getScoreRed(), 0l);
-    pressKey(delegate, WatchUi.KEY_DOWN, 100);
-    Test.assertEqual(model.getScoreRed(), 1l);
-    Test.assertEqual(delegate.vibrations, 2);
-    return true;
-}
-
-(:test)
-function overlappingKeysAndStartAliases(logger) {
-    var model = new ScoreModel(new MemoryScoreStore());
-    var delegate = new RecordingDelegate(model, new ScoreLayout());
-    model.addRedPoint();
-    delegate.handleKeyPressed(WatchUi.KEY_UP, 100);
-    delegate.handleKeyPressed(WatchUi.KEY_DOWN, 120);
-    delegate.handleKeyReleased(WatchUi.KEY_UP, 200);
-    delegate.handleKeyReleased(WatchUi.KEY_DOWN, 920);
-    Test.assertEqual(model.getScoreBlue(), 1l);
-    Test.assertEqual(model.getScoreRed(), 0l);
-    delegate.handleKeyPressed(WatchUi.KEY_ENTER, 1000);
-    delegate.handleKeyPressed(WatchUi.KEY_START, 2400);
-    delegate.handleKeyReleased(WatchUi.KEY_START, 2500);
-    delegate.handleKeyReleased(WatchUi.KEY_ENTER, 2501);
-    Test.assertEqual(model.getScoreBlue(), 0l);
-    Test.assertEqual(model.getScoreRed(), 0l);
-    Test.assertEqual(delegate.vibrations, 3);
-    pressKey(delegate, WatchUi.KEY_START, 100);
-    Test.assertEqual(model.getScoreBlue(), 1l);
-    return true;
-}
-
-(:test)
-function keyDurationsSurviveTimerWraparound(logger) {
-    var model = new ScoreModel(new MemoryScoreStore());
-    var delegate = new RecordingDelegate(model, new ScoreLayout());
-    model.addBluePoint();
-    model.addRedPoint();
-    delegate.handleKeyPressed(WatchUi.KEY_UP, 2147483400);
-    delegate.handleKeyReleased(WatchUi.KEY_UP, -2147483096); // 800 ms across signed wrap
-    Test.assertEqual(model.getScoreBlue(), 0l);
-    delegate.handleKeyPressed(WatchUi.KEY_DOWN, 2147483400);
-    delegate.handleKeyReleased(WatchUi.KEY_DOWN, -2147483097); // 799 ms
-    Test.assertEqual(model.getScoreRed(), 2l);
-    delegate.handleKeyPressed(WatchUi.KEY_DOWN, -100);
-    delegate.handleKeyReleased(WatchUi.KEY_DOWN, 700); // negative timer through zero
-    Test.assertEqual(model.getScoreRed(), 1l);
-    delegate.handleKeyPressed(WatchUi.KEY_START, 2147483400);
-    delegate.handleKeyReleased(WatchUi.KEY_START, -2147482396); // 1500 ms
-    Test.assertEqual(model.getScoreRed(), 0l);
-    pressKey(delegate, WatchUi.KEY_START, 100);
-    Test.assertEqual(model.getScoreRed(), 1l);
-    Test.assertEqual(delegate.vibrations, 5);
+    Test.assert(!model.hasStorageError());
     return true;
 }

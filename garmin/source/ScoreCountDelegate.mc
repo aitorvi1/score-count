@@ -3,20 +3,16 @@ import Toybox.Lang;
 import Toybox.System;
 import Toybox.WatchUi;
 
-class ScoreCountDelegate extends WatchUi.InputDelegate {
+class ScoreCountDelegate extends WatchUi.BehaviorDelegate {
     const VIBRATION_STRENGTH = 50;
     const VIBRATION_MS = 80;
-    static const POINT_HOLD_MS = 800;
-    static const RESET_HOLD_MS = 1500;
-    const TIMER_WRAP_MS = 4294967296l;
 
     var _model;
     var _layout;
     var _touch;
-    var _pressedAt as Lang.Array<Lang.Number or Null> = [null, null, null];
 
     function initialize(model, layout) {
-        InputDelegate.initialize();
+        BehaviorDelegate.initialize();
         _model = model;
         _layout = layout;
         _touch = new TouchGesture();
@@ -27,54 +23,74 @@ class ScoreCountDelegate extends WatchUi.InputDelegate {
     }
 
     function handleKey(key) {
-        // Garmin can send this action event before release, including on key down.
-        // Only onKeyReleased changes scores; consuming it prevents double actions.
-        return _keyIndex(key) >= 0;
-    }
-
-    function onKeyPressed(event) {
-        return handleKeyPressed(event.getKey(), System.getTimer());
-    }
-
-    function handleKeyPressed(key, now) {
-        var index = _keyIndex(key);
-        if (index < 0) { return false; }
-        // Auto-repeat must not restart the duration of the original press.
-        if (_pressedAt[index] == null) { _pressedAt[index] = now; }
-        return true;
-    }
-
-    function onKeyReleased(event) {
-        return handleKeyReleased(event.getKey(), System.getTimer());
-    }
-
-    function handleKeyReleased(key, now) {
-        var index = _keyIndex(key);
-        if (index < 0) { return false; }
-        var startedAt = _pressedAt[index];
-        _pressedAt[index] = null;
-        if (startedAt == null) { return true; }
-
-        // getTimer is a signed 32-bit millisecond counter. Widen before subtracting
-        // and account for its wrap from positive to negative values after boot.
-        var elapsed = now.toLong() - startedAt.toLong();
-        if (elapsed < 0) { elapsed += TIMER_WRAP_MS; }
-        if (index == 0) {
-            _finish(elapsed >= POINT_HOLD_MS ? _model.subtractBluePoint() : _model.addBluePoint());
-        } else if (index == 1) {
-            _finish(elapsed >= POINT_HOLD_MS ? _model.subtractRedPoint() : _model.addRedPoint());
+        if (key == WatchUi.KEY_UP) {
+            _finish(_model.addBluePoint());
+        } else if (key == WatchUi.KEY_DOWN) {
+            _finish(_model.addRedPoint());
+        } else if (key == WatchUi.KEY_ENTER || key == WatchUi.KEY_START) {
+            _finish(_model.undo());
+        } else if (key == WatchUi.KEY_MENU) {
+            // Raw-key fallback for profiles without an onMenu behavior mapping.
+            return onMenu();
         } else {
-            _finish(elapsed >= RESET_HOLD_MS ? _model.reset() : _model.undo());
+            // BACK/ESC, LAP and LIGHT retain Garmin's standard behavior.
+            return false;
         }
         return true;
     }
 
-    function _keyIndex(key) {
-        if (key == WatchUi.KEY_UP) { return 0; }
-        if (key == WatchUi.KEY_DOWN) { return 1; }
-        if (key == WatchUi.KEY_ENTER || key == WatchUi.KEY_START) { return 2; }
-        // ESC/BACK, LAP, LIGHT and MENU retain Garmin's standard behavior.
-        return -1;
+    // Returning false lets physical keys reach onKey and touch reach onTap/onSwipe.
+    // These behaviors must never modify the score: swipes also map to them.
+    function onPreviousPage() { return false; }
+    function onNextPage() { return false; }
+    function onSelect() { return false; }
+    function onBack() { return false; }
+
+    function onMenu() {
+        var menu = new WatchUi.Menu();
+        menu.setTitle(Rez.Strings.AppName);
+        menu.addItem(Rez.Strings.SubtractBlue, :subtractBlue);
+        menu.addItem(Rez.Strings.SubtractRed, :subtractRed);
+        menu.addItem(Rez.Strings.ResetScore, :resetScore);
+        _pushMenu(menu, new ScoreCountMenuDelegate(self));
+        // Handled behaviors do not fall through to onKey(KEY_MENU).
+        return true;
+    }
+
+    function handleMenuItem(item) {
+        if (item != :subtractBlue && item != :subtractRed && item != :resetScore) {
+            return false;
+        }
+        if (item == :subtractBlue) {
+            _finish(_model.subtractBluePoint());
+        } else if (item == :subtractRed) {
+            _finish(_model.subtractRedPoint());
+        } else if (item == :resetScore) {
+            // A normal selection dismisses Menu. When pushing another view, close
+            // it explicitly so cancelling Confirmation returns to the score.
+            _closeMenu();
+            _pushResetConfirmation(new ScoreResetConfirmationDelegate(self));
+        }
+        return true;
+    }
+
+    function handleResetResponse(response) {
+        // Confirmation closes itself. Never pop the score view here.
+        if (response == WatchUi.CONFIRM_YES) { _finish(_model.reset()); }
+        return true;
+    }
+
+    function _pushMenu(menu, delegate) {
+        WatchUi.pushView(menu, delegate, WatchUi.SLIDE_IMMEDIATE);
+    }
+
+    function _closeMenu() {
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+    }
+
+    function _pushResetConfirmation(delegate) {
+        var message = WatchUi.loadResource(Rez.Strings.ConfirmReset) as Lang.String;
+        WatchUi.pushView(new WatchUi.Confirmation(message), delegate, WatchUi.SLIDE_IMMEDIATE);
     }
 
     function onTap(event) {
