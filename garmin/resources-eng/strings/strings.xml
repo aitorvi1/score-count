@@ -1,0 +1,7 @@
+<strings>
+    <string id="AppName">Score Count</string>
+    <string id="Reset">RESET</string>
+    <string id="BlueTeam">BLUE</string>
+    <string id="RedTeam">RED</string>
+    <string id="SaveError">SAVE ERROR</string>
+</strings>

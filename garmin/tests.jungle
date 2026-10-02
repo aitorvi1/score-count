@@ -1,0 +1,2 @@
+# Tests use the same production sources and resources.
+base.sourcePath = source;tests

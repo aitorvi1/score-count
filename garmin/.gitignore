@@ -1,0 +1,8 @@
+/bin/
+/screenshots/
+/.keys/
+*.prg
+*.prg.debug.xml
+*.iq
+*.pem
+*.der

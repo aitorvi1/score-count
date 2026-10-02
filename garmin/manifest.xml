@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
+    <iq:application id="854c3e8cfc934e58a1f4202b2b30de16" type="watch-app"
+                    name="@Strings.AppName" entry="ScoreCountApp"
+                    launcherIcon="@Drawables.LauncherIcon" minApiLevel="2.4.0" version="1.0.0">
+        <iq:products>
+            <iq:product id="fenix7"/>
+            <iq:product id="fenix7s"/>
+            <iq:product id="epix2"/>
+            <iq:product id="fr255"/>
+            <iq:product id="venu2"/>
+            <iq:product id="vivoactive4"/>
+        </iq:products>
+        <iq:permissions/>
+        <iq:languages>
+            <iq:language>spa</iq:language>
+            <iq:language>eng</iq:language>
+        </iq:languages>
+        <iq:barrels/>
+    </iq:application>
+</iq:manifest>

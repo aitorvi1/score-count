@@ -1,0 +1,9 @@
+project.manifest = manifest.xml
+project.typecheck = 1
+base.sourcePath = source
+base.resourcePath = resources
+base.lang.spa = resources-spa
+base.lang.eng = resources-eng
+epix2.resourcePath = $(epix2.resourcePath);resources-icon60
+venu2.resourcePath = $(venu2.resourcePath);resources-icon70
+vivoactive4.resourcePath = $(vivoactive4.resourcePath);resources-icon35

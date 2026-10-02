@@ -1,6 +1,3 @@
-cd ~/Documents/frontenis-score
-
-cat > README.md <<'EOF'
 # Score Count
 
 Aplicación sencilla de marcador de frontenis/frontón para Huawei Watch.
@@ -46,3 +43,31 @@ La compatibilidad con otros relojes Huawei Lite Wearable no está garantizada y 
 
 ```text
 com.frontenisscore.app
+```
+
+## Versiones y estructura
+
+La aplicación Huawei sigue en `app/` (JS, HML, CSS). `entry/` contiene el módulo,
+los recursos y los enlaces a ese código. La raíz se abre en DevEco Studio con
+la configuración Hvigor existente. `lite-sample/` conserva el ejemplo original.
+La firma Huawei se configura localmente en DevEco Studio.
+
+La Watch App para **Garmin Connect IQ**, escrita en **Monkey C**, está aislada en
+[`garmin/`](garmin/). Añade controles físicos, un historial persistente de 25
+estados para UNDO y una interfaz basada en las dimensiones reales del reloj.
+RESET también se puede deshacer. El primer dispositivo de referencia es Fenix 7.
+
+Consulta [`garmin/README.md`](garmin/README.md) para instalar el SDK oficial,
+abrir el proyecto en VS Code, compilar, usar el simulador, instalar en el reloj y
+exportar para Connect IQ Store. La validación se registra en
+[`garmin/TESTING.md`](garmin/TESTING.md).
+
+```text
+app/          Aplicación Huawei
+entry/        Módulo y recursos Huawei; enlaces a app/
+hvigor/       Configuración de construcción Huawei
+lite-sample/  Ejemplo original Huawei
+garmin/       Aplicación Connect IQ, recursos, pruebas y documentación
+```
+
+No hay dependencias compartidas ni cambios en la lógica de la aplicación Huawei.
