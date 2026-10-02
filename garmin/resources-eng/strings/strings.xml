@@ -4,8 +4,4 @@
     <string id="BlueTeam">BLUE</string>
     <string id="RedTeam">RED</string>
     <string id="SaveError">SAVE ERROR</string>
-    <string id="SubtractBlue">-1 blue</string>
-    <string id="SubtractRed">-1 red</string>
-    <string id="ResetScore">Reset score</string>
-    <string id="ConfirmReset">Reset score?</string>
 </strings>
