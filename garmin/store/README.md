@@ -20,6 +20,7 @@ The app stores score state and up to 25 history entries locally on the watch. It
 - [LISTING_EN.md](LISTING_EN.md): English Store copy.
 - [PRIVACY.md](PRIVACY.md): privacy statement suitable for linking from the Store.
 - [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md): final export and submission checklist.
+- [assets/score-count-store-icon-500.png](assets/score-count-store-icon-500.png): definitive Store listing icon.
 
 ## Final Store export
 
@@ -76,7 +77,9 @@ Garmin's current Connect IQ brand guidance specifies:
 - avoid descriptive text, clip art and fine details
 - do not use Garmin branding without permission
 
-The current on-device launcher is not automatically assumed to be the best Store tile. Use the Score Count visual identity, but prepare a Store-specific 500 × 500 asset that follows these constraints.
+The definitive Store listing icon is [assets/score-count-store-icon-500.png](assets/score-count-store-icon-500.png): a 500 × 500 RGB PNG with an embedded sRGB profile and no transparency. It preserves the full square composition of `Logo_garmin.png`, resized with LANCZOS without cropping, added text or design changes. The untagged RGB original was treated as sRGB; its color values were not transformed.
+
+Visual inspection at 500, 128 and 64 px confirms the frontón remains recognizable, the blue/red cards and both zeros remain legible, with no clipping or transparent borders. The outer 10 px contain only the preserved light background. The original image remains unchanged. This asset is exclusively for the Store listing; the on-watch launcher resources are unchanged. Preview sizes are not versioned.
 
 ### Optional on-device Store icon
 

@@ -57,10 +57,13 @@ sha256sum bin/ScoreCount.iq
 
 ## Assets
 
-- [ ] Store icon: 500 × 500 px, sRGB.
-- [ ] At least 10 px internal padding.
-- [ ] No transparent or black background for the Store tile.
-- [ ] No Garmin branding.
+- [x] Definitive Store icon: `assets/score-count-store-icon-500.png` — 500 × 500 PNG, RGB, embedded sRGB profile, no transparency.
+- [x] At least 10 px internal padding: light background preserved around the entire perimeter.
+- [x] No transparent or black background for the Store tile.
+- [x] No Garmin branding in the Store icon.
+- [x] Original composition and proportions preserved with LANCZOS; no crop or added text.
+- [x] Visual inspection at 500, 128 and 64 px: recognizable frontón, distinct blue/red cards, legible zeros, no clipping.
+- [x] Store-only asset; on-watch launcher resources unchanged.
 - [ ] Screenshots come from the final release build.
 - [ ] Include representative round and rectangular layouts.
 - [ ] Hero image, if used: 1440 × 720 px.
