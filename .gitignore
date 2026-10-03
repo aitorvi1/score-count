@@ -1,7 +1,7 @@
-# Build outputs
-app/build/
-app/.cache/
-.hvigor/
+# Editor / OS
+.DS_Store
+*.swp
+*.swo
 
 # Logs
 *.log
@@ -9,34 +9,10 @@ app/.cache/
 # Node
 node_modules/
 
-# Editor / OS
-.DS_Store
-*.swp
-*.swo
-
-# Signing material
-signing/
+# Private signing / key material
 *.p12
 *.csr
 *.cer
 *.p7b
-
-# Backups de DevEco/Hvigor
-*.bak-6.0
-
-# HAPs generados/exportados
-*.hap
-
-# Firma / credenciales
-signing/
-*.p12
-*.cer
-*.p7b
-*.csr
-
-# Artefactos generados
-*.hap
-*.bak-6.0
-entry/build/
-app/build/
-.hvigor/
+*.pem
+*.der

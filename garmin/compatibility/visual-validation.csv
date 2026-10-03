@@ -1,0 +1,21 @@
+product_id,shape,width,height,policy,passed,checks
+venusq,rectangle,240,240,TOUCH,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+venusq2,rectangle,320,360,TOUCH,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+venux1,rectangle,448,486,TOUCH,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+fr55,round,208,208,FULL_PHYSICAL,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+fenix5s,round,218,218,FULL_PHYSICAL,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+legacyherocaptainmarvel,round,218,218,TOUCH,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+d2charlie,round,240,240,FULL_PHYSICAL,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+approachs60,round,240,240,TOUCH,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+fenix6,round,260,260,FULL_PHYSICAL,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+approachs62,round,260,260,TOUCH,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+descentmk2,round,280,280,FULL_PHYSICAL,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+fr265s,round,360,360,FULL_PHYSICAL,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+venu2s,round,360,360,TOUCH,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+descentg2,round,390,390,FULL_PHYSICAL,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+approachs50,round,390,390,TOUCH,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+d2mach1,round,416,416,FULL_PHYSICAL,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+d2airx10,round,416,416,TOUCH,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+d2mach2,round,454,454,FULL_PHYSICAL,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+approachs7047mm,round,454,454,TOUCH,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.
+fenix9pro51mm,round,466,466,FULL_PHYSICAL,True,Tarjetas completas; 1–1 legible; RESET completo y centrado; sin clipping ni solapamientos.

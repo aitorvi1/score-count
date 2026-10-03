@@ -1,0 +1,12 @@
+# DevEco / Hvigor outputs
+/app/build/
+/app/.cache/
+/entry/build/
+/.hvigor/
+
+# Signing
+/signing/
+
+# Generated packages / backups
+*.hap
+*.bak-6.0

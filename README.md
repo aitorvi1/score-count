@@ -1,48 +1,54 @@
-cd ~/Documents/frontenis-score
-
-cat > README.md <<'EOF'
 # Score Count
 
-Aplicación sencilla de marcador de frontenis/frontón para Huawei Watch.
+Score Count es un marcador de frontenis/frontón para smartwatch con implementaciones independientes para **Huawei** y **Garmin**.
 
-Está diseñada para poder llevar el marcador directamente desde el reloj durante un partido, con una interfaz grande y simple para evitar tener que mirar el móvil.
+Cada plataforma vive en su propia carpeta y se puede abrir, compilar y mantener como proyecto separado.
 
-## Estado del proyecto
+## Plataformas
 
-Versión funcional probada en reloj físico.
+| Plataforma | Implementación | Estado |
+| --- | --- | --- |
+| [Huawei](huawei/) | Lite Wearable / HarmonyOS | Funcional y probada en Huawei Watch GT 5 |
+| [Garmin](garmin/) | Connect IQ / Monkey C | 118 product IDs validados en SDK/simulador; hardware físico pendiente |
 
-### Funciones actuales
-
-- Marcador para dos jugadores/equipos.
-- Zona azul para el jugador/equipo izquierdo.
-- Zona roja para el jugador/equipo derecho.
-- Toque corto sobre una zona: suma `+1`.
-- Pulsación larga sobre una zona: resta `-1`.
-- La puntuación nunca baja de `0`.
-- Vibración al modificar la puntuación.
-- RESET protegido mediante pulsación larga.
-- Persistencia del marcador:
-  - si se sale de la aplicación y se vuelve a entrar, se conserva la puntuación;
-  - el marcador se guarda en almacenamiento privado de la aplicación.
-- Icono personalizado para la aplicación.
-
-## Dispositivo probado
-
-La aplicación se ha desarrollado y probado principalmente en:
-
-- **Huawei Watch GT 5**
-- Sistema: **HarmonyOS 6**
-- Firmware probado: **HarmonyOS 6.0.0.32**
-- Tipo de dispositivo del proyecto: `liteWearable`
-- Pantalla circular
-- Resolución de referencia: **466 × 466 px**
-
-La compatibilidad con otros relojes Huawei Lite Wearable no está garantizada y debe probarse en hardware real.
-
-## Aplicación
-
-- Nombre: `Score Count`
-- Bundle name:
+## Estructura del repositorio
 
 ```text
-com.frontenisscore.app
+score-count/
+├── README.md
+├── huawei/     Aplicación Huawei, configuración DevEco/Hvigor y documentación
+└── garmin/     Aplicación Garmin Connect IQ, tests, compatibilidad y documentación
+```
+
+No hay dependencias de runtime compartidas entre ambas implementaciones. Cada carpeta contiene su propia configuración de construcción, recursos y documentación.
+
+## Funcionalidad
+
+Las dos versiones están orientadas a llevar un marcador directamente desde el reloj durante un partido:
+
+- dos puntuaciones, azul y roja;
+- sumar y restar puntos;
+- la puntuación nunca baja de cero;
+- RESET;
+- persistencia del marcador;
+- feedback háptico cuando la plataforma lo permite.
+
+Los controles concretos y las capacidades adicionales dependen de la plataforma.
+
+## Huawei
+
+La versión Huawei es la implementación original y está probada en un **Huawei Watch GT 5** con HarmonyOS 6.
+
+Consulta [huawei/README.md](huawei/README.md) para la estructura del proyecto, dispositivo de referencia, controles y apertura en DevEco Studio.
+
+## Garmin
+
+La versión Garmin está escrita en **Monkey C** para Connect IQ. La compatibilidad actual declara **118 product IDs**: 89 con política `FULL_PHYSICAL` y 29 con política `TOUCH`.
+
+La validación registrada incluye 236 compilaciones, 2.513 tests PASS y revisión visual representativa, sin presentar simulación como validación física.
+
+Consulta:
+
+- [garmin/README.md](garmin/README.md) — desarrollo, controles, compilación e instalación.
+- [garmin/TESTING.md](garmin/TESTING.md) — validación funcional.
+- [garmin/compatibility/VALIDATION.md](garmin/compatibility/VALIDATION.md) — compatibilidad y validación de los 118 targets.
