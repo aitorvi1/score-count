@@ -312,8 +312,8 @@ monkeyc -f monkey.jungle -e -r -y /ruta/privada/developer_key.der -o bin/ScoreCo
 El `.iq` incluye los productos del manifest y se carga desde
 [Submit an App](https://apps.garmin.com/developer/submit). Prepara descripción,
 categoría, contacto de soporte, capturas e icono de Store según el formulario
-vigente. El launcher reutiliza el icono Huawei; su máster está en
-`entry/src/main/resources/base/media/logo_master.png` para generar el de Store.
+vigente. La ficha preparada y el checklist de publicación están en [store/](store/). El launcher reutiliza el icono Huawei; su máster está en
+`../huawei/entry/src/main/resources/base/media/logo_master.png` para generar el de Store.
 Revisa las [directrices oficiales](https://developer.garmin.com/connect-iq/app-review-guidelines/).
 Solo se guardan marcador e historial en el reloj, sin servicios externos. La
 revisión y publicación requieren tu cuenta Garmin y quedan fuera de esta implementación.
