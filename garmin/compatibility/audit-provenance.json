@@ -1,0 +1,22 @@
+{
+  "sources": {
+    "recommended-product-ids.txt": {
+      "sha256": "8ff941516b31ff18706706d97ed9dd263b04d6bd48bae8b27e49c0cecb36e060",
+      "bytes": 1230
+    },
+    "compatibility.csv": {
+      "sha256": "3f9807547d6e10a32fc32c4b9be1ba754edd3787c167f7ec947b850c62765e3d",
+      "bytes": 105820
+    },
+    "compatibility.json": {
+      "sha256": "c38f272497147f0618dec3bf9acc3a9a65770d340970245f46cc7b6c0f2609a9",
+      "bytes": 383494
+    },
+    "report.md": {
+      "sha256": "ab5cdb7a2b9792324a9e0eeb9b44332999b4a6104a30fbde44b69145263c2f65",
+      "bytes": 85014
+    }
+  },
+  "base_commit": "68399591287cb6650887e26b83a04bd9241b90f6",
+  "audit": "Second Garmin navigation compatibility audit"
+}

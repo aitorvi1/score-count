@@ -1,5 +1,10 @@
 # Validación Garmin: políticas de entrada y RESET táctil
 
+La validación masiva actual de 118 productos está en
+[compatibility/VALIDATION.md](compatibility/VALIDATION.md). Los resultados de seis
+productos que siguen corresponden al commit base `6839959` y se conservan como
+referencia de comportamiento e interacción.
+
 Validación del 3 de octubre de 2026 en el entorno local del usuario.
 Solo se modifican archivos de `garmin/`. No se modifica `manifest.xml`, UUID,
 `minApiLevel="2.4.0"`, productos declarados, Huawei ni almacenamiento del modelo.
@@ -122,5 +127,6 @@ ignora un tap intencional muy rápido después de un hold; Garmin decide el umbr
 del hold táctil. FR255 no tiene touchscreen: sus tests táctiles ejercitan los
 handlers comunes, mientras que el uso real depende de FULL_PHYSICAL.
 
-No se añaden dispositivos ni se adaptan Fenix 3, vivoactive 3, Instinct, Crossover
-u otros perfiles pendientes.
+Esta validación del commit base no añadía dispositivos. La ampliación actual
+mantiene excluidos los perfiles pendientes de adaptación; solo incorpora la
+lista final de la segunda auditoría.

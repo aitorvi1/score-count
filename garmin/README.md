@@ -12,8 +12,8 @@ No registra una actividad deportiva ni utiliza GPS.
 2. Descarga el [SDK Manager oficial](https://developer.garmin.com/connect-iq/sdk/).
    Sigue el asistente e inicia sesión en tu cuenta Garmin cuando lo solicite.
 3. Instala y selecciona el SDK Connect IQ estable actual. Versión de desarrollo:
-   **9.2.0**. En **Devices**, descarga los seis modelos de la tabla de
-   compatibilidad con sus fuentes. El ZIP del SDK no incluye esos perfiles.
+   **9.2.0**. En **Devices**, descarga los perfiles de los dispositivos que vayas a construir
+   (118 para la validación completa), con sus fuentes. El ZIP del SDK no incluye esos perfiles.
 4. Instala VS Code y **Monkey C de Garmin** (`garmin.monkey-c`).
 5. Abre **`score-count/garmin/`**, como proyecto independiente de la raíz Huawei.
 6. Ejecuta **Monkey C: Verify Installation** desde la paleta de comandos.
@@ -91,6 +91,7 @@ python3 tools/build.py --sdk /ruta/al/sdk --key /ruta/privada/developer_key.der 
 ## Controles y políticas de entrada
 
 Jungle selecciona en compilación una única implementación de `ScoreCountDelegate`.
+La tabla siguiente muestra ejemplos; la lista completa contiene 118 productos.
 No hay comprobaciones de product IDs en runtime ni una política predeterminada
 para futuros productos. Se usan `sourcePath` por dispositivo, según la
 [configuración oficial de Jungle](https://developer.garmin.com/connect-iq/core-topics/build-configuration/).
@@ -165,29 +166,32 @@ la entrada según el perfil. Debe validarse en hardware.
 
 ## Compatibilidad declarada
 
-| Producto | ID SDK | Pantalla | Táctil |
-| --- | --- | --- | --- |
-| Fenix 7 / variantes agrupadas por Garmin | `fenix7` | 260 × 260 MIP | Sí |
-| Fenix 7S | `fenix7s` | 240 × 240 MIP | Sí |
-| Epix (Gen 2) / variantes agrupadas por Garmin | `epix2` | 416 × 416 AMOLED | Sí |
-| Forerunner 255 | `fr255` | 260 × 260 MIP | No |
-| Venu 2 | `venu2` | 416 × 416 AMOLED | Sí |
-| vívoactive 4 | `vivoactive4` | 260 × 260 MIP | Sí |
+El manifest incluye exactamente los **118 product IDs recomendados por la segunda
+auditoría**: 89 FULL_PHYSICAL y 29 TOUCH (clasificados SAFE_HYBRID en la auditoría).
+La lista exacta está en [recommended-product-ids.txt](compatibility/recommended-product-ids.txt)
+y la política, geometría, tamaño de launcher y límites oficiales de cada target
+en [targets.json](compatibility/targets.json). No se incluyen NEEDS_ADAPTATION,
+INCOMPATIBLE, los vívoactive 3, vívoactive HR, Fenix 3, Edge ni dispositivos de mano.
+Los dos Instinct incluidos son exclusivamente los AMOLED recomendados.
 
-Los resultados por modelo están en [TESTING.md](TESTING.md). Una compilación o
-simulación no equivale a una prueba física. La interfaz usa dimensiones reales,
-proporciones y medición de fuentes nativas. Reduce la fuente según los dígitos y
-puede dividir valores largos en líneas. El diseño muestra **solo números grandes
-centrados** en dos tarjetas, azul a la izquierda y roja a la derecha, sobre fondo
-negro, con RESET debajo. No hay título superior ni etiquetas AZUL/ROJO o BLUE/RED.
-Las tarjetas aprovechan el espacio liberado y sus esquinas respetan la pantalla
-circular. Solo un fallo real de almacenamiento muestra el aviso de error.
-No hay fallback visual especial: todos los perfiles declarados tienen color.
-No se declaran todavía relojes monocromos, rectangulares ni otras variantes de
-estas familias; su posible identificación mínima deberá evaluarse al añadirlos.
+Hay pantallas circulares de 208, 218, 240, 260, 280, 360, 390, 416, 454 y 466 px,
+y rectangulares de 240×240, 320×360 y 448×486. El diseño del marcador no cambia:
+tarjetas azul/roja, números grandes centrados y RESET en una sola línea.
+Las fuentes se ajustan por medición y los valores largos pueden dividirse en líneas.
+Todos los perfiles declarados tienen color; no hay adaptación monocroma.
 
-Para ampliar: descarga el perfil oficial, añádelo al manifest, compila, ejecuta
-tests y revisa controles, fuentes y límites de pantalla en su simulador.
+Los resultados por producto y la inspección de las 20 combinaciones de
+forma/resolución/política están en [compatibility/VALIDATION.md](compatibility/VALIDATION.md).
+Una compilación o simulación no equivale a una prueba física.
+
+El launcher comparte el PNG original y aplica dimensiones verificadas contra
+`compiler.json`: 8 qualifiers de geometría y 29 excepciones por producto.
+Los recursos de icono no cambian el layout del marcador.
+
+Para futuras ampliaciones, revisa el perfil oficial y su seguridad de entrada;
+no hay fallback de política. Deben actualizarse manifest, Jungle y suites,
+compilar, ejecutar tests y revisar pantalla y navegación. No basta con añadir
+un ID al manifest.
 
 ## Arquitectura y almacenamiento
 
@@ -208,6 +212,10 @@ tests/full-physical/         Regresiones físicas y comprobación de política
 tests/touch/                 Passthrough y comprobación de política
 tests.jungle                 Inclusión de tests en compilaciones de prueba
 tools/build.py               Construcción por manifest y exportación
+tools/verify_targets.py      Lista auditada, exclusiones, políticas y tamaños
+tools/validate_compatibility.py  Builds aislados y suites nativas por producto
+tools/render_compatibility.py   Capturas representativas X11
+compatibility/              Lista, metadatos, procedencia y validación masiva
 ```
 
 UP corto y tap azul llaman a `addBluePoint()`; DOWN corto y tap rojo a
@@ -261,7 +269,7 @@ háptico. Los resultados y la validación de eventos están en [TESTING.md](TEST
 ## Instalar en Fenix 7 físico
 
 1. Actualiza el reloj y verifica que sea el perfil **fenix7**. 7S/7X necesitan sus
-   propios binarios; 7X aún no está declarado.
+   propios binarios; selecciona el ID exacto del modelo.
 2. Ejecuta **Monkey C: Build for Device**, elige **fenix7** y genera `ScoreCount.prg`
    firmado con tu clave. Alternativa desde `garmin/`:
 
