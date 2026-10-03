@@ -17,7 +17,7 @@
 - [ ] Rebuild native tests when source/configuration changed.
 - [ ] Confirm 0 compiler warnings and 0 compiler errors.
 - [ ] Confirm native tests pass.
-- [ ] Confirm representative screenshots are from the final release build.
+- [x] Confirm representative screenshots are from current production releases rebuilt with SDK 9.2.0 (zero compiler warnings/errors).
 - [ ] Keep the physical-hardware limitations documented.
 
 ## Export
@@ -64,8 +64,11 @@ sha256sum bin/ScoreCount.iq
 - [x] Original composition and proportions preserved with LANCZOS; no crop or added text.
 - [x] Visual inspection at 500, 128 and 64 px: recognizable frontón, distinct blue/red cards, legible zeros, no clipping.
 - [x] Store-only asset; on-watch launcher resources unchanged.
-- [ ] Screenshots come from the final release build.
-- [ ] Include representative round and rectangular layouts.
+- [x] Final screenshots: `assets/screenshots/fenix7-7-5.png`, `venu2-7-5.png`, `venusq2-7-5.png` and `venu2-0-0.png`.
+- [x] Include round FULL_PHYSICAL, round TOUCH and rectangular TOUCH at native 260 × 260, 416 × 416 and 320 × 360 resolutions.
+- [x] Scores set by real simulator input through production delegates/model; no hardcoded scores.
+- [x] Only native app framebuffers: no scaling, watch frame, cursor or simulator overlays.
+- [x] Visual checks: complete cards, centered digits, full RESET, correct 7–5 / 0–0 states, no clipping or artifacts.
 - [ ] Hero image, if used: 1440 × 720 px.
 
 ## Submission

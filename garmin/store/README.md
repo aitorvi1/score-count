@@ -97,16 +97,20 @@ https://developer.garmin.com/brand-guidelines/connect-iq/
 
 ## Screenshot set
 
-Use real simulator output from the final release build, not mock controls.
+Final Store screenshots are native app framebuffers exported with the official simulator's **File > Save Screen Capture** command:
 
-Recommended representative set:
+| Screenshot | Device / policy | Native resolution | Score |
+| --- | --- | --- | --- |
+| [fenix7-7-5.png](assets/screenshots/fenix7-7-5.png) | Fenix 7 / FULL_PHYSICAL | 260 × 260 | 7–5 |
+| [venu2-7-5.png](assets/screenshots/venu2-7-5.png) | Venu 2 / TOUCH | 416 × 416 | 7–5 |
+| [venusq2-7-5.png](assets/screenshots/venusq2-7-5.png) | Venu Sq 2 / TOUCH | 320 × 360 | 7–5 |
+| [venu2-0-0.png](assets/screenshots/venu2-0-0.png) | Venu 2 / TOUCH | 416 × 416 | 0–0 |
 
-1. **Round MIP / FULL_PHYSICAL** — e.g. Fenix 7 / 260 × 260.
-2. **Round AMOLED / TOUCH** — e.g. Venu 2 / 416 × 416.
-3. **Rectangular TOUCH** — e.g. Venu Sq 2 / 320 × 360.
-4. Optional additional screenshot showing a non-zero score, such as 7–5, to make the purpose obvious.
+The three production releases were rebuilt with official SDK 9.2.0 from source commit `3d9c12f0c43345d81ec8d86141762a53d23034e1`, with zero compiler warnings or errors. No production code, configuration, launcher resources or scores were modified for capture. Fenix 7 was reset with START long, then scored using seven short UP and five short DOWN releases. TOUCH devices were reset by tapping RESET, then scored with seven blue and five red taps. The clean Venu 2 screenshot was captured after tapping RESET.
 
-Keep screenshots visually consistent and do not imply physical-hardware validation where only SDK/simulator validation exists.
+Each PNG was visually checked: complete blue/red cards, centered digits, full RESET, correct score, no clipping or artifacts. Captures contain only app pixels, without the watch frame, desktop, simulator controls, overlays or cursor. They are not scaled, composited or manually retouched. Temporary scripts, logs and binaries stay ignored under `garmin/bin/`.
+
+These are simulator captures, not physical-hardware validation.
 
 ## Support
 
