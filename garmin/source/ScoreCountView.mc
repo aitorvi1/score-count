@@ -40,8 +40,8 @@ class ScoreCountView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
         dc.drawRoundedRectangle(reset[0], reset[1], reset[2], reset[3], _layout.width * 0.025);
-        var resetFont = _fitFont(dc, _resetName, reset[2] * 0.88, reset[3] * 0.80,
-                                [Graphics.FONT_SMALL, Graphics.FONT_TINY]);
+        var resetFont = _fitFont(dc, _resetName, reset[2] * 0.88, reset[3] * 0.90,
+                                [Graphics.FONT_SMALL, Graphics.FONT_TINY, Graphics.FONT_XTINY]);
         dc.drawText(reset[0] + reset[2] / 2, reset[1] + reset[3] / 2,
                     resetFont, _resetName,
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);

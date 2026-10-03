@@ -2,7 +2,8 @@
 
 Watch App de Connect IQ para llevar un marcador azul/rojo durante un partido.
 Estado inicial `0–0`, sin negativos ni máximo deportivo. El marcador y los últimos
-**25 estados** sobreviven a salir, cerrar y volver a abrir. RESET es deshacible.
+**25 estados** sobreviven a salir, cerrar y volver a abrir. En FULL_PHYSICAL,
+RESET es deshacible mediante START/ENTER corto.
 No registra una actividad deportiva ni utiliza GPS.
 
 ## Instalar herramientas y abrir VS Code
@@ -87,7 +88,19 @@ python3 tools/build.py --sdk /ruta/al/sdk --key /ruta/privada/developer_key.der
 python3 tools/build.py --sdk /ruta/al/sdk --key /ruta/privada/developer_key.der --device fenix7
 ```
 
-## Controles
+## Controles y políticas de entrada
+
+Jungle selecciona en compilación una única implementación de `ScoreCountDelegate`.
+No hay comprobaciones de product IDs en runtime ni una política predeterminada
+para futuros productos. Se usan `sourcePath` por dispositivo, según la
+[configuración oficial de Jungle](https://developer.garmin.com/connect-iq/core-topics/build-configuration/).
+
+| Producto | Política |
+| --- | --- |
+| fenix7, fenix7s, epix2, fr255 | `FULL_PHYSICAL` |
+| venu2, vivoactive4 | `TOUCH` |
+
+### FULL_PHYSICAL
 
 Las acciones físicas se ejecutan **únicamente al soltar** el botón:
 
@@ -97,47 +110,58 @@ Las acciones físicas se ejecutan **únicamente al soltar** el botón:
 | DOWN | <800 ms: +1 rojo | ≥800 ms: −1 rojo |
 | START / ENTER | <1500 ms: UNDO | ≥1500 ms: RESET directo a 0–0 |
 
-RESET no pide confirmación y se puede deshacer mediante UNDO, incluso después
-de cerrar y abrir la app. Restar en cero y RESET en 0–0 no generan escritura,
-historial ni vibración. BACK/LAP y LIGHT conservan el comportamiento estándar
-Garmin: sus eventos no se consumen ni modifican el marcador.
+`onKeyPressed()` registra el timer por botón; auto-repeat no reinicia el tiempo.
+`onKeyReleased()` borra el registro antes de ejecutar una única acción. Releases
+huérfanos o repetidos no hacen nada. UP/DOWN/START tienen registros independientes;
+las acciones solapadas se aplican en orden de release. ENTER y START comparten
+registro. La resta usa `Lang.Long` antes de calcular la diferencia y añade 2³²
+si es negativa para cubrir el overflow firmado del contador.
 
-`onKeyPressed()` registra `System.getTimer()` por botón; los presses repetidos
-no reinician el tiempo. `onKeyReleased()` elimina ese registro antes de ejecutar
-una única acción. Releases sin press o repetidos no hacen nada. UP, DOWN y START
-mantienen registros independientes: si se solapan, las acciones se aplican en
-orden de release. ENTER y START comparten registro, aunque Garmin cambie el alias
-entre press y release. La resta de tiempos usa `Lang.Long` antes de calcular la
-diferencia y añade 2³² si es negativa, cubriendo el overflow firmado del contador.
-No hay temporizadores activos, esperas ni bucles de espera en la aplicación.
+`onKey()` consume UP/DOWN/ENTER/START y KEY_MENU sin puntuar. Los callbacks
+`onPreviousPage`, `onNextPage` y `onSelect` solo se consumen mientras está activo
+su botón. Sin un botón activo devuelven `false`, permitiendo táctil y swipes.
+`onMenu()` consume MENU, incluido el generado por UP largo, sin abrir vistas,
+puntuar ni borrar el timestamp UP. BACK/LAP/LIGHT quedan libres.
 
-`onKey()` solo consume UP/DOWN/ENTER/START y KEY_MENU, sin modificar puntuaciones.
-`BehaviorDelegate` hereda los callbacks básicos de `InputDelegate`; los eventos
-secundarios `onPreviousPage`, `onNextPage` y `onSelect` se consumen si está activo
-su botón físico y nunca puntúan. Sin ese botón activo devuelven `false`, dejando
-llegar tap/swipe a sus handlers básicos. Los swipes no tienen acción de marcador.
+### TOUCH
 
-El perfil oficial Fenix 7 asigna mantener UP a `onMenu()`. Este callback devuelve
-`true` sin abrir ninguna vista, puntuar ni borrar el registro UP. Al llegar el
-release UP se comprueba la duración original: ≥800 ms resta azul exactamente
-una vez. Si MENU llega sin UP activo, también se consume sin inventar un press.
-No existe menú de acciones ni diálogo de confirmación en Score Count.
+No se usa ningún botón físico para el marcador. `onKey`, `onKeyPressed`,
+`onKeyReleased`, `onMenu`, `onBack`, `onPreviousPage`, `onNextPage`,
+`onPreviousMode`, `onNextMode` y `onSelect` devuelven `false`, incluso para
+UP/DOWN/ENTER/START/MENU. Garmin conserva la gestión de esos eventos.
+La app es completamente utilizable mediante touchscreen.
 
-El firmware físico puede reservar hotkeys (por ejemplo música al mantener DOWN)
-o interrumpir la entrega de eventos a Connect IQ. La app solo puede actuar sobre
-los presses/releases que recibe; no sintetiza acciones si falta el release.
-Debe validarse en hardware Fenix 7 y FR255 con sus hotkeys configuradas.
+### Táctil común
 
-Los controles táctiles se conservan: tap azul/rojo suma, hold azul/rojo resta,
-hold RESET resetea y tap corto RESET no actúa. Las zonas coinciden con las tarjetas
-y RESET; los márgenes no suman. Garmin determina cuándo envía `onHold`. Se procesa
-una modificación por hold y se ignoran taps durante el hold y los **200 ms**
-posteriores al release para evitar duplicados. Cada cambio válido genera el pulso
-existente de 80 ms si la vibración está disponible y habilitada.
+| Zona | Tap | Hold |
+| --- | --- | --- |
+| Azul | +1 azul | −1 azul |
+| Roja | +1 rojo | −1 rojo |
+| RESET | RESET | Sin acción |
 
-FR255 dispone de las acciones físicas de la tabla. En Venu/vívoactive, cuyos
-perfiles no exponen UP/DOWN, sumar/restar se hace mediante táctil; UNDO/RESET
-físicos requieren que el perfil entregue ENTER/START press y release.
+La zona inferior muestra únicamente `RESET`, centrado en una línea. Se recuperan
+sus dimensiones originales, sin ampliar el ancho ni cambiar las tarjetas o los
+números del marcador. No hay segunda línea ni etiqueta alternativa.
+FR255 no tiene touchscreen y usa sus controles `FULL_PHYSICAL`.
+
+Tap RESET pone directamente el marcador a 0–0. En `FULL_PHYSICAL` puede deshacerse
+mediante START/ENTER corto, incluso después de cerrar y abrir. En `TOUCH` no hay
+UNDO desde la interfaz: el historial se conserva internamente, pero ningún botón
+o gesto lo utiliza. Restar en cero y RESET en 0–0 no generan escritura, historial
+ni vibración; un RESET redundante conserva el historial previo. UNDO físico sin
+historial tampoco escribe ni vibra.
+
+Garmin determina cuándo envía `onHold`. Se aplica una modificación por hold de
+equipo y se ignoran taps durante el hold y los **200 ms** posteriores al release
+para evitar duplicados. Mantener RESET no ejecuta otra acción. Los márgenes no
+puntúan. Cada cambio válido genera el pulso existente de 80 ms si la vibración
+está disponible y habilitada. No hay temporizadores activos, esperas ni bucles
+de espera en la app.
+
+El firmware puede reservar hotkeys o interrumpir la entrega de eventos a Connect
+IQ. La app no sintetiza acciones si falta el release. La devolución de `false`
+en TOUCH no implementa menús Garmin: permite que firmware y simulador gestionen
+la entrada según el perfil. Debe validarse en hardware.
 
 ## Compatibilidad declarada
 
@@ -173,19 +197,23 @@ monkey.jungle                 Configuración del proyecto
 source/ScoreCountApp.mc       Ciclo de vida y composición
 source/ScoreModel.mc          Puntuaciones, historial, validación y ScoreStore
 source/ScoreCountView.mc      Dibujo y selección de fuentes
-source/ScoreCountDelegate.mc  BehaviorDelegate, teclas explícitas, táctil y háptica
+source/ScoreCountCommonDelegate.mc  Táctil, actualización y háptica compartidos
+policies/full-physical/       Delegate físico, timers y MENU
+policies/touch/               Delegate con eventos físicos libres
 source/ScoreLayout.mc         Dimensiones y zonas de dibujo/entrada
 source/TouchGesture.mc        Hold/release y protección de duplicados
 resources*/                  Icono reutilizado de Huawei y strings ES/EN
-tests/                       Tests nativos Run No Evil
+tests/common/                Modelo, almacenamiento y táctil para ambas políticas
+tests/full-physical/         Regresiones físicas y comprobación de política
+tests/touch/                 Passthrough y comprobación de política
 tests.jungle                 Inclusión de tests en compilaciones de prueba
 tools/build.py               Construcción por manifest y exportación
 ```
 
 UP corto y tap azul llaman a `addBluePoint()`; DOWN corto y tap rojo a
 `addRedPoint()`. Las pulsaciones largas físicas y los holds táctiles llaman a las mismas
-restas de `ScoreModel`; START largo y hold RESET llaman a `reset()`.
-START corto llama a `undo()`. Los eventos secundarios nunca modifican el modelo.
+restas de `ScoreModel`; START largo en FULL_PHYSICAL y tap RESET llaman a `reset()`.
+Solo START/ENTER corto en FULL_PHYSICAL llama a `undo()`. Los eventos secundarios nunca modifican el modelo.
 El modelo prepara el nuevo estado, lo guarda, publica el cambio y devuelve si
 hubo modificación. La entrada solicita `WatchUi.requestUpdate()` y genera
 háptica. Garmin programa el redibujado: `requestUpdate()` no es síncrono, por lo
@@ -221,7 +249,10 @@ monkeyc -f 'monkey.jungle;tests.jungle' -d fenix7 -t \
 monkeydo bin/ScoreCount-tests-fenix7.prg fenix7 -t
 ```
 
-Repite con los demás modelos. Los tests cubren umbrales exactos, acciones solo al
+Repite con los demás modelos. `tests.jungle` extiende las rutas de producción y
+selecciona únicamente la suite de la política de cada perfil. Un test verifica
+explícitamente `INPUT_POLICY`; TOUCH no ejecuta regresiones FULL_PHYSICAL.
+Los tests cubren umbrales exactos, acciones solo al
 soltar, repetición/duplicados, releases huérfanos, solapamientos, alias ENTER/START,
 overflow del timer, MENU durante UP, navegación, táctil, persistencia, historial
 de 25 estados y errores de almacenamiento. Usan almacén en memoria y contador
@@ -246,7 +277,7 @@ háptico. Los resultados y la validación de eventos están en [TESTING.md](TEST
    tu sistema. El `.iq` es para Store, no para copiar al reloj.
 5. Expulsa de forma segura, desconecta y abre **Score Count** desde las apps del
    reloj. Habilita el táctil si está desactivado para las aplicaciones.
-6. Prueba UP/DOWN/START cortos y largos, hold táctil en equipos/RESET,
+6. Prueba UP/DOWN/START cortos y largos, tap RESET y holds en equipos,
    BACK/LAP/LIGHT y reentrada con marcador e historial. Comprueba que UP largo
    no abre vistas, RESET se puede deshacer y las hotkeys no impiden los releases.
 

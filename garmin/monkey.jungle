@@ -7,3 +7,12 @@ base.lang.eng = resources-eng
 epix2.resourcePath = $(epix2.resourcePath);resources-icon60
 venu2.resourcePath = $(venu2.resourcePath);resources-icon70
 vivoactive4.resourcePath = $(vivoactive4.resourcePath);resources-icon35
+
+# Each declared product selects exactly one implementation of ScoreCountDelegate.
+# No fallback: a future product must receive an explicit policy before building.
+fenix7.sourcePath = $(base.sourcePath);policies/full-physical
+fenix7s.sourcePath = $(base.sourcePath);policies/full-physical
+epix2.sourcePath = $(base.sourcePath);policies/full-physical
+fr255.sourcePath = $(base.sourcePath);policies/full-physical
+venu2.sourcePath = $(base.sourcePath);policies/touch
+vivoactive4.sourcePath = $(base.sourcePath);policies/touch

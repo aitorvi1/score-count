@@ -1,2 +1,8 @@
-# Tests use the same production sources and resources.
-base.sourcePath = source;tests
+# Tests extend the production selection rather than replacing it.
+base.sourcePath = source;tests/common
+fenix7.sourcePath = $(fenix7.sourcePath);tests/full-physical
+fenix7s.sourcePath = $(fenix7s.sourcePath);tests/full-physical
+epix2.sourcePath = $(epix2.sourcePath);tests/full-physical
+fr255.sourcePath = $(fr255.sourcePath);tests/full-physical
+venu2.sourcePath = $(venu2.sourcePath);tests/touch
+vivoactive4.sourcePath = $(vivoactive4.sourcePath);tests/touch
