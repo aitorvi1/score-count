@@ -47,7 +47,7 @@ garmin/bin/ScoreCount.iq
 
 The `.iq` is intentionally ignored by Git and must not be committed.
 
-For the validated 118-target build generated before the repository reorganization, the export was 2,386,952 bytes. A fresh export from `main` should be validated again instead of assuming the previous file is the release artifact.
+Final Store export verified from `main` commit `ad6e46f936a056c288c1f21d20fb6bd909f0ec66`:\n\n- File: `garmin/bin/ScoreCount.iq`\n- Size: **2,385,178 bytes**\n- SHA-256: `9327c77029bd5ccdafc396440108110439146e9ea152aa2751efe9a0f5782fe9`\n- Product IDs: **118**\n- Hardware variants: **201**\n- Export warnings/errors: **0 / 0**\n\nThe `.iq` remains ignored by Git. Re-export before submission only if the Garmin source/configuration or release metadata changes.
 
 ## Official Garmin submission flow
 
