@@ -2,17 +2,17 @@
 
 ## Source state
 
-- [ ] Work from `main`.
+- [x] Work from `main` (`ad6e46f936a056c288c1f21d20fb6bd909f0ec66`).
 - [ ] `git pull --ff-only`.
-- [ ] `git status --short` is empty.
-- [ ] Version remains the intended Store version.
-- [ ] UUID remains `854c3e8cfc934e58a1f4202b2b30de16`.
-- [ ] Manifest still contains exactly 118 product IDs.
-- [ ] Target split is still 89 FULL_PHYSICAL + 29 TOUCH.
+- [x] `git status --short` is empty.
+- [x] Version remains `1.0.0`.
+- [x] UUID remains `854c3e8cfc934e58a1f4202b2b30de16`.
+- [x] Manifest contains exactly 118 product IDs.
+- [x] Target split is 89 FULL_PHYSICAL + 29 TOUCH.
 
 ## Validation
 
-- [ ] Run `tools/verify_targets.py`.
+- [x] `tools/verify_targets.py` PASS.
 - [ ] Rebuild release targets when source/configuration changed.
 - [ ] Rebuild native tests when source/configuration changed.
 - [ ] Confirm 0 compiler warnings and 0 compiler errors.
@@ -39,10 +39,10 @@ ls -lh bin/ScoreCount.iq
 sha256sum bin/ScoreCount.iq
 ```
 
-- [ ] `bin/ScoreCount.iq` exists.
-- [ ] Export produces no warnings/errors.
-- [ ] `.iq` remains ignored by Git.
-- [ ] Developer key remains outside the repository.
+- [x] `bin/ScoreCount.iq` exists.
+- [x] Export produces 0 warnings / 0 errors.
+- [x] `.iq` remains ignored by Git.
+- [x] Developer key remains outside the repository.
 - [ ] Keep the same developer key for future Store updates.
 
 ## Store metadata
